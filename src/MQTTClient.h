@@ -115,7 +115,7 @@
   #define DLLExport __declspec(dllexport)
 #else
   #define DLLImport extern
-  #define DLLExport __attribute__ ((visibility ("default")))
+  #define DLLExport
 #endif
 
 #include <stdio.h>

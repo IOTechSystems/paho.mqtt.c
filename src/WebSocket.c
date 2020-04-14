@@ -31,6 +31,13 @@
 
 #if defined(__linux__)
 #  include <endian.h>
+#    define htobe16(x)   htons(x)
+#    define htobe32(x)   htonl(x)
+#    define be16toh(x)   ntohs(x)
+#    define be32toh(x)   ntohl(x)
+//#    define be64toh(x)   ntohll(x)
+#    define htobe64(x) (htons(1) == 1 ? (x) : (((uint64_t)htonl(x) << 32) + htonl((x) >> 32)))
+#    define be64toh(x) (htons(1) == 1 ? (x) : (((uint64_t)ntohl(x) << 32) + ntohl((x) >> 32)))
 #elif defined(__APPLE__)
 #  include <libkern/OSByteOrder.h>
 #  define htobe16(x) OSSwapHostToBigInt16(x)
@@ -101,9 +108,9 @@ void uuid_generate( uuid_t out )
 	if ( !rc )
 #endif /* defined (OPENSSL) */
 	{
+		int i;
 		/* very insecure, but generates a random uuid */
 		srand(time(NULL));
-		int i;
 		for ( i = 0; i < 16; ++i )
 			out[i] = (unsigned char)(rand() % UCHAR_MAX);
 		out[6] = (out[6] & 0x0f) | 0x40;
@@ -334,9 +341,11 @@ int WebSocket_connect( networkHandles *net, const char *uri )
 	UuidCreate( &uuid );
 	Base64_encode( net->websocket_key, 25u, (const b64_data_t*)&uuid, sizeof(UUID) );
 #else /* if defined(WIN32) || defined(WIN64) */
-	uuid_t uuid;
-	uuid_generate( uuid );
-	Base64_encode( net->websocket_key, 25u, uuid, sizeof(uuid_t) );
+        {
+          uuid_t uuid;
+          uuid_generate( uuid );
+          Base64_encode( net->websocket_key, 25u, uuid, sizeof(uuid_t) );
+        }
 #endif /* else if defined(WIN32) || defined(WIN64) */
 
 	hostname_len = MQTTProtocol_addressPort(uri, &port, &topic);

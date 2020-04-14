@@ -49,6 +49,7 @@
 #if !defined(WIN32) && !defined(WIN64)
 	#include <sys/time.h>
 #endif
+#include <time.h>
 
 #include "MQTTClient.h"
 #if !defined(NO_PERSISTENCE)
@@ -265,7 +266,7 @@ START_TIME_TYPE MQTTClient_start_clock(void)
 	static struct timeval start;
 	static struct timespec start_ts;
 
-	clock_gettime(CLOCK_MONOTONIC, &start_ts);
+	clock_gettime(CLOCK_REALTIME, &start_ts);
 	start.tv_sec = start_ts.tv_sec;
 	start.tv_usec = start_ts.tv_nsec / 1000;
 	return start;
@@ -294,7 +295,7 @@ long MQTTClient_elapsed(struct timeval start)
 	struct timeval now, res;
 	static struct timespec now_ts;
 
-	clock_gettime(CLOCK_MONOTONIC, &now_ts);
+	clock_gettime(CLOCK_REALTIME, &now_ts);
 	now.tv_sec = now_ts.tv_sec;
 	now.tv_usec = now_ts.tv_nsec / 1000;
 	timersub(&now, &start, &res);
@@ -1511,11 +1512,12 @@ MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions*
 int MQTTClient_connect(MQTTClient handle, MQTTClient_connectOptions* options)
 {
 	MQTTClients* m = handle;
+	MQTTResponse response;
 
 	if (m->c->MQTTVersion >= MQTTVERSION_5)
 		return MQTTCLIENT_WRONG_MQTT_VERSION;
 
-	MQTTResponse response = MQTTClient_connectAll(handle, options, NULL, NULL);
+	response = MQTTClient_connectAll(handle, options, NULL, NULL);
 
 	return response.reasonCode;
 }

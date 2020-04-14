@@ -27,6 +27,7 @@
  */
 
 
+#include <time.h>
 #include "Thread.h"
 #if defined(THREAD_UNIT_TESTS)
 #define NOSTACKTRACE
@@ -234,7 +235,7 @@ int Thread_wait_sem(sem_type sem, int timeout)
 #define USE_TRYWAIT
 #if defined(USE_TRYWAIT)
 	int i = 0;
-	useconds_t interval = 10000; /* 10000 microseconds: 10 milliseconds */
+	int interval = 10000; /* 10000 microseconds: 10 milliseconds */
 	int count = (1000 * timeout) / interval; /* how many intervals in timeout period */
 #else
 	struct timespec ts;

@@ -181,6 +181,7 @@ int Log_initialize(Log_nameValue* info)
 		}
 	}
 #if !defined(WIN32) && !defined(WIN64)
+        {
 	struct stat buf;
 	if (stat("/proc/version", &buf) != -1)
 	{
@@ -197,6 +198,7 @@ int Log_initialize(Log_nameValue* info)
 			fclose(vfile);
 		}
 	}
+        }
 #endif
 	Log_output(TRACE_MINIMUM, "=========================================================");
 		

@@ -15,6 +15,9 @@
  *******************************************************************************/
 
 #include "SHA1.h"
+#include "Socket.h"
+#    define htobe32(x)   htonl(x)
+#    define be32toh(x)   ntohl(x)
 
 #if !defined(OPENSSL)
 #if defined(WIN32) || defined(WIN64)
