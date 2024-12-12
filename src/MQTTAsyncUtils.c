@@ -1124,6 +1124,7 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 							MQTTAsync_successData data;
 
 							data.token = command->token;
+                                                        data.counter = command->counter;
 							data.alt.pub.destinationName = command->details.pub.destinationName;
 							data.alt.pub.message.payload = command->details.pub.payload;
 							data.alt.pub.message.payloadlen = command->details.pub.payloadlen;
@@ -1137,6 +1138,7 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 							MQTTAsync_successData5 data = MQTTAsync_successData5_initializer;
 
 							data.token = command->token;
+                                                        data.counter = command->counter;
 							data.alt.pub.destinationName = command->details.pub.destinationName;
 							data.alt.pub.message.payload = command->details.pub.payload;
 							data.alt.pub.message.payloadlen = command->details.pub.payloadlen;
@@ -1154,6 +1156,7 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 							MQTTAsync_failureData data;
 
 							data.token = command->token;
+                                                        data.counter = command->counter;
 							data.code = rc;
 							data.message = NULL;
 							Log(TRACE_MIN, -1, "Calling publish failure for client %s", m->c->clientID);
@@ -1164,6 +1167,7 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 							MQTTAsync_failureData5 data;
 
 							data.token = command->token;
+                                                        data.counter = command->counter;
 							data.code = rc;
 							data.message = NULL;
 							data.packet_type = PUBLISH;
@@ -1443,6 +1447,7 @@ static int MQTTAsync_processCommand(void)
 					MQTTAsync_successData data;
 
 					data.token = command->command.token;
+					data.counter = command->command.counter;
 					data.alt.pub.destinationName = command->command.details.pub.destinationName;
 					data.alt.pub.message.payload = command->command.details.pub.payload;
 					data.alt.pub.message.payloadlen = command->command.details.pub.payloadlen;
@@ -1456,6 +1461,7 @@ static int MQTTAsync_processCommand(void)
 					MQTTAsync_successData5 data = MQTTAsync_successData5_initializer;
 
 					data.token = command->command.token;
+					data.counter = command->command.counter;
 					data.alt.pub.destinationName = command->command.details.pub.destinationName;
 					data.alt.pub.message.payload = command->command.details.pub.payload;
 					data.alt.pub.message.payloadlen = command->command.details.pub.payloadlen;
@@ -1890,6 +1896,7 @@ void MQTTAsync_freeResponses(MQTTAsyncs* m)
 				MQTTAsync_failureData data;
 
 				data.token = command->command.token;
+				data.counter = command->command.counter;
 				data.code = MQTTASYNC_OPERATION_INCOMPLETE; /* interrupted return code */
 				data.message = NULL;
 
@@ -1902,6 +1909,7 @@ void MQTTAsync_freeResponses(MQTTAsyncs* m)
 				MQTTAsync_failureData5 data = MQTTAsync_failureData5_initializer;
 
 				data.token = command->command.token;
+				data.counter = command->command.counter;
 				data.code = MQTTASYNC_OPERATION_INCOMPLETE; /* interrupted return code */
 				data.message = NULL;
 
@@ -1943,6 +1951,7 @@ void MQTTAsync_freeCommands(MQTTAsyncs* m)
 				MQTTAsync_failureData data;
 
 				data.token = command->command.token;
+				data.counter = command->command.counter;
 				data.code = MQTTASYNC_OPERATION_INCOMPLETE; /* interrupted return code */
 				data.message = NULL;
 
@@ -1955,6 +1964,7 @@ void MQTTAsync_freeCommands(MQTTAsyncs* m)
 				MQTTAsync_failureData5 data = MQTTAsync_failureData5_initializer;
 
 				data.token = command->command.token;
+				data.counter = command->command.counter;
 				data.code = MQTTASYNC_OPERATION_INCOMPLETE; /* interrupted return code */
 				data.message = NULL;
 

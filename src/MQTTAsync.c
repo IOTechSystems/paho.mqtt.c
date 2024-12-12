@@ -1202,6 +1202,7 @@ int MQTTAsync_send(MQTTAsync handle, const char* destinationName, int payloadlen
 	MQTTAsyncs* m = handle;
 	MQTTAsync_queuedCommand* pub;
 	int msgid = 0;
+        static _Atomic uint64_t msgcount = 0;
 
 	FUNC_ENTRY;
 	if (m == NULL || m->c == NULL)
@@ -1223,7 +1224,7 @@ int MQTTAsync_send(MQTTAsync handle, const char* destinationName, int payloadlen
 		rc = MQTTASYNC_BAD_UTF8_STRING;
 	else if (qos < 0 || qos > 2)
 		rc = MQTTASYNC_BAD_QOS;
-	else if (qos > 0 && (msgid = MQTTAsync_assignMsgId(m)) == 0)
+	else if ((msgid = MQTTAsync_assignMsgId(m)) == 0)
 		rc = MQTTASYNC_NO_MORE_MSGIDS;
 	else if (m->createOptions &&
 			(m->createOptions->struct_version < 2 || m->createOptions->deleteOldestMessages == 0) &&
@@ -1256,6 +1257,7 @@ int MQTTAsync_send(MQTTAsync handle, const char* destinationName, int payloadlen
 	pub->client = m;
 	pub->command.type = PUBLISH;
 	pub->command.token = msgid;
+        pub->command.counter = msgcount++;
 	if (response)
 	{
 		pub->command.onSuccess = response->onSuccess;
@@ -1264,6 +1266,7 @@ int MQTTAsync_send(MQTTAsync handle, const char* destinationName, int payloadlen
 		pub->command.onFailure5 = response->onFailure5;
 		pub->command.context = response->context;
 		response->token = pub->command.token;
+                response->counter = pub->command.counter;
 		if (m->c->MQTTVersion >= MQTTVERSION_5)
 			pub->command.properties = MQTTProperties_copy(&response->properties);
 	}

@@ -46,6 +46,7 @@ typedef struct
 	MQTTAsync_onSuccess5* onSuccess5;
 	MQTTAsync_onFailure5* onFailure5;
 	MQTTAsync_token token;
+	uint64_t counter;
 	void* context;
 	START_TIME_TYPE start_time;
 	MQTTProperties properties;

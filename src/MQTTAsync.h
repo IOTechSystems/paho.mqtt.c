@@ -93,6 +93,7 @@
 #endif
 
 #include <stdio.h>
+#include <inttypes.h>
 /*
 /// @endcond
 */
@@ -553,6 +554,7 @@ typedef struct
 {
 	/** A token identifying the failed request. */
 	MQTTAsync_token token;
+        uint64_t counter;
 	/** A numeric code identifying the error. */
 	int code;
 	/** Optional text explaining the error. Can be NULL. */
@@ -569,6 +571,7 @@ typedef struct
 	int struct_version;
 	/** A token identifying the failed request. */
 	MQTTAsync_token token;
+        uint64_t counter;
 	/** The MQTT reason code returned. */
 	enum MQTTReasonCodes reasonCode;
 	/** The MQTT properties on the ack, if any. */
@@ -581,13 +584,14 @@ typedef struct
 	int packet_type;
 } MQTTAsync_failureData5;
 
-#define MQTTAsync_failureData5_initializer {{'M', 'Q', 'F', 'D'}, 0, 0, MQTTREASONCODE_SUCCESS, MQTTProperties_initializer, 0, NULL, 0}
+#define MQTTAsync_failureData5_initializer {{'M', 'Q', 'F', 'D'}, 0, 0, 0, MQTTREASONCODE_SUCCESS, MQTTProperties_initializer, 0, NULL, 0}
 
 /** The data returned on completion of a successful API call in the response callback onSuccess. */
 typedef struct
 {
 	/** A token identifying the successful request. Can be used to refer to the request later. */
 	MQTTAsync_token token;
+        uint64_t counter;
 	/** A union of the different values that can be returned for subscribe, unsubscribe and publish. */
 	union
 	{
@@ -621,6 +625,7 @@ typedef struct
 	int struct_version;  	/**< The version number of this structure.  Will be 0 */
 	/** A token identifying the successful request. Can be used to refer to the request later. */
 	MQTTAsync_token token;
+        uint64_t counter;
 	enum MQTTReasonCodes reasonCode;  	/**< MQTT V5 reason code returned */
 	MQTTProperties properties;  	        /**< MQTT V5 properties returned, if any */
 	/** A union of the different values that can be returned for subscribe, unsubscribe and publish. */
@@ -654,7 +659,7 @@ typedef struct
 	} alt;
 } MQTTAsync_successData5;
 
-#define MQTTAsync_successData5_initializer {{'M', 'Q', 'S', 'D'}, 0, 0, MQTTREASONCODE_SUCCESS, MQTTProperties_initializer, {.sub={0,0}}}
+#define MQTTAsync_successData5_initializer {{'M', 'Q', 'S', 'D'}, 0, 0, 0, MQTTREASONCODE_SUCCESS, MQTTProperties_initializer, {.sub={0,0}}}
 
 /**
  * This is a callback function. The client application
@@ -754,6 +759,10 @@ typedef struct MQTTAsync_responseOptions
     * change by the application will be ignored.
     */
 	MQTTAsync_token token;
+        /**
+    * A counter which increments every time send is called
+    */
+        uint64_t counter;
 	/**
     * A pointer to a callback function to be called if the API call successfully
     * completes.  Can be set to NULL, in which case no indication of successful
@@ -785,7 +794,7 @@ typedef struct MQTTAsync_responseOptions
 	MQTTSubscribe_options* subscribeOptionsList;
 } MQTTAsync_responseOptions;
 
-#define MQTTAsync_responseOptions_initializer { {'M', 'Q', 'T', 'R'}, 1, NULL, NULL, 0, 0, NULL, NULL, MQTTProperties_initializer, MQTTSubscribe_options_initializer, 0, NULL}
+#define MQTTAsync_responseOptions_initializer { {'M', 'Q', 'T', 'R'}, 1, NULL, NULL, 0, 0, 0, NULL, NULL, MQTTProperties_initializer, MQTTSubscribe_options_initializer, 0, NULL}
 
 /** A synonym for responseOptions to better reflect its usage since MQTT 5.0 */
 typedef struct MQTTAsync_responseOptions MQTTAsync_callOptions;
