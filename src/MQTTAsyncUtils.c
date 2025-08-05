@@ -56,7 +56,7 @@ static void MQTTAsync_stop(void);
 static void MQTTAsync_closeOnly(Clients* client, enum MQTTReasonCodes reasonCode, MQTTProperties* props);
 static int clientStructCompare(void* a, void* b);
 static int MQTTAsync_cleanSession(Clients* client);
-static int MQTTAsync_deliverMessage(MQTTAsyncs* m, char* topicName, size_t topicLen, MQTTAsync_message* mm);
+static int MQTTAsync_deliverMessage(MQTTAsyncs* m, Publications* publication, MQTTAsync_message* mm);
 static int MQTTAsync_disconnect_internal(MQTTAsync handle, int timeout);
 static int cmdMessageIDCompare(void* a, void* b);
 static void MQTTAsync_retry(void);
@@ -349,14 +349,14 @@ static int MQTTAsync_persistCommand(MQTTAsync_queuedCommand* qcmd)
 			bufs[bufindex] = &command->token;
 			lens[bufindex++] = sizeof(command->token);
 
-			bufs[bufindex] = command->details.pub.destinationName;
-			lens[bufindex++] = (int)strlen(command->details.pub.destinationName) + 1;
+			bufs[bufindex] = command->details.pub.publication->topic;
+			lens[bufindex++] = command->details.pub.publication->topiclen;
 
-			bufs[bufindex] = &command->details.pub.payloadlen;
-			lens[bufindex++] = sizeof(command->details.pub.payloadlen);
+			bufs[bufindex] = &command->details.pub.publication->payloadlen;
+			lens[bufindex++] = sizeof(command->details.pub.publication->payloadlen);
 
-			bufs[bufindex] = command->details.pub.payload;
-			lens[bufindex++] = command->details.pub.payloadlen;
+			bufs[bufindex] = command->details.pub.publication->payload;
+			lens[bufindex++] = command->details.pub.publication->payloadlen;
 
 			bufs[bufindex] = &command->details.pub.qos;
 			lens[bufindex++] = sizeof(command->details.pub.qos);
@@ -554,25 +554,30 @@ static MQTTAsync_queuedCommand* MQTTAsync_restoreCommand(char* buffer, int bufle
 
 			if (qcommand->not_restored == 0)
 			{
-				if ((command->details.pub.destinationName = malloc(data_size)) == NULL)
+				if ((command->details.pub.publication = malloc(sizeof(Publications))) == NULL)
 					goto error_exit;
-				strcpy(command->details.pub.destinationName, ptr);
+				if ((command->details.pub.publication->topic = malloc(data_size)) == NULL)
+				{
+					free(command->details.pub.publication);
+					goto error_exit;
+				}
+				strcpy(command->details.pub.publication->topic, ptr);
 			}
 			ptr += data_size;
 
 			if (&ptr[sizeof(int)] > endpos)
 				goto error_exit;
-			command->details.pub.payloadlen = *(int*)ptr;
+			command->details.pub.publication->payloadlen = *(int*)ptr;
 			ptr += sizeof(int);
 
-			data_size = command->details.pub.payloadlen;
+			data_size = command->details.pub.publication->payloadlen;
 			if (&ptr[data_size] > endpos)
 				goto error_exit;
 			if (qcommand->not_restored == 0)
 			{
-				if ((command->details.pub.payload = malloc(data_size)) == NULL)
+				if ((command->details.pub.publication->payload = malloc(data_size)) == NULL)
 					goto error_exit;
-				memcpy(command->details.pub.payload, ptr, data_size);
+				memcpy(command->details.pub.publication->payload, ptr, data_size);
 			}
 			ptr += data_size;
 
@@ -858,10 +863,8 @@ int MQTTAsync_addCommand(MQTTAsync_queuedCommand* command, int command_size)
 					command->key = malloc(strlen(key)+1);
 					strcpy(command->key, key);
 
-					free(command->command.details.pub.payload);
-					command->command.details.pub.payload = NULL;
-					free(command->command.details.pub.destinationName);
-					command->command.details.pub.destinationName = NULL;
+					MQTTProtocol_removePublication(command->command.details.pub.publication);
+					command->command.details.pub.publication = NULL;
 					MQTTProperties_free(&command->command.properties);
 				}
 			}
@@ -1048,12 +1051,9 @@ static void MQTTAsync_freeCommand1(MQTTAsync_queuedCommand *command)
 	else if (command->command.type == PUBLISH)
 	{
 		/* qos 1 and 2 topics are freed in the protocol code when the flows are completed */
-		if (command->command.details.pub.destinationName)
-			free(command->command.details.pub.destinationName);
-		command->command.details.pub.destinationName = NULL;
-		if (command->command.details.pub.payload)
-			free(command->command.details.pub.payload);
-		command->command.details.pub.payload = NULL;
+		if (command->command.details.pub.publication)
+			MQTTProtocol_removePublication(command->command.details.pub.publication);
+		command->command.details.pub.publication = NULL;
 	}
 	MQTTProperties_free(&command->command.properties);
 	if (command->not_restored && command->key)
@@ -1124,9 +1124,9 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 							MQTTAsync_successData data;
 
 							data.token = command->token;
-							data.alt.pub.destinationName = command->details.pub.destinationName;
-							data.alt.pub.message.payload = command->details.pub.payload;
-							data.alt.pub.message.payloadlen = command->details.pub.payloadlen;
+							data.alt.pub.destinationName = command->details.pub.publication->topic;
+							data.alt.pub.message.payload = command->details.pub.publication->payload;
+							data.alt.pub.message.payloadlen = command->details.pub.publication->payloadlen;
 							data.alt.pub.message.qos = command->details.pub.qos;
 							data.alt.pub.message.retained = command->details.pub.retained;
 							Log(TRACE_MIN, -1, "Calling publish success for client %s", m->c->clientID);
@@ -1137,9 +1137,9 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 							MQTTAsync_successData5 data = MQTTAsync_successData5_initializer;
 
 							data.token = command->token;
-							data.alt.pub.destinationName = command->details.pub.destinationName;
-							data.alt.pub.message.payload = command->details.pub.payload;
-							data.alt.pub.message.payloadlen = command->details.pub.payloadlen;
+							data.alt.pub.destinationName = command->details.pub.publication->topic;
+							data.alt.pub.message.payload = command->details.pub.publication->payload;
+							data.alt.pub.message.payloadlen = command->details.pub.publication->payloadlen;
 							data.alt.pub.message.qos = command->details.pub.qos;
 							data.alt.pub.message.retained = command->details.pub.retained;
 							data.properties = command->properties;
@@ -1176,8 +1176,8 @@ void MQTTAsync_writeComplete(SOCKET socket, int rc)
 					/* QoS 0 payloads are freed elsewhere after a write complete,
 					 * so we should indicate that.
 					 */
-					if (command->details.pub.qos == 0)
-						command->details.pub.payload = NULL;
+					// if (command->details.pub.qos == 0)
+					//         command->details.pub.payload = NULL;
 				}
 				if (com)
 				{
@@ -1420,12 +1420,8 @@ static int MQTTAsync_processCommand(void)
 			goto exit;
 		}
 
-		/* Initialize the mask */
-		memset(p->mask, 0, sizeof(p->mask));
-
-		p->payload = command->command.details.pub.payload;
-		p->payloadlen = command->command.details.pub.payloadlen;
-		p->topic = command->command.details.pub.destinationName;
+		p->publication = command->command.details.pub.publication;
+		p->publication->refcount++;
 		p->msgId = command->command.token;
 		p->MQTTVersion = command->client->c->MQTTVersion;
 		p->properties = initialized;
@@ -1443,36 +1439,44 @@ static int MQTTAsync_processCommand(void)
 					MQTTAsync_successData data;
 
 					data.token = command->command.token;
-					data.alt.pub.destinationName = command->command.details.pub.destinationName;
-					data.alt.pub.message.payload = command->command.details.pub.payload;
-					data.alt.pub.message.payloadlen = command->command.details.pub.payloadlen;
+					command->command.details.pub.publication->refcount++;
+					data.alt.pub.destinationName = command->command.details.pub.publication->topic;
+					data.alt.pub.message.payload = command->command.details.pub.publication->payload;
+					data.alt.pub.message.payloadlen = command->command.details.pub.publication->payloadlen;
 					data.alt.pub.message.qos = command->command.details.pub.qos;
 					data.alt.pub.message.retained = command->command.details.pub.retained;
 					Log(TRACE_MIN, -1, "Calling publish success for client %s", command->client->c->clientID);
 					(*(command->command.onSuccess))(command->command.context, &data);
+					MQTTProtocol_removePublication(command->command.details.pub.publication);
 				}
 				else if (command->command.onSuccess5)
 				{
 					MQTTAsync_successData5 data = MQTTAsync_successData5_initializer;
 
 					data.token = command->command.token;
-					data.alt.pub.destinationName = command->command.details.pub.destinationName;
-					data.alt.pub.message.payload = command->command.details.pub.payload;
-					data.alt.pub.message.payloadlen = command->command.details.pub.payloadlen;
+					command->command.details.pub.publication->refcount++;
+					data.alt.pub.destinationName = command->command.details.pub.publication->topic;
+					data.alt.pub.message.payload = command->command.details.pub.publication->payload;
+					data.alt.pub.message.payloadlen = command->command.details.pub.publication->payloadlen;
+
 					data.alt.pub.message.qos = command->command.details.pub.qos;
 					data.alt.pub.message.retained = command->command.details.pub.retained;
 					data.properties = command->command.properties;
 					Log(TRACE_MIN, -1, "Calling publish success for client %s", command->client->c->clientID);
 					(*(command->command.onSuccess5))(command->command.context, &data);
+					MQTTProtocol_removePublication(command->command.details.pub.publication);
 				}
 			}
 			else
 			{
+#if 0
+				// TODO: confirm this is redundant
 				if (rc != SOCKET_ERROR)
 				{
 					command->command.details.pub.payload = NULL; /* this will be freed by the protocol code */
 					command->command.details.pub.destinationName = NULL; /* this will be freed by the protocol code */
 				}
+#endif
 				command->client->pending_write = &command->command;
 			}
 		}
@@ -1862,8 +1866,7 @@ void MQTTAsync_emptyMessageQueue(Clients* client)
 		while (ListNextElement(client->messageQueue, &current))
 		{
 			qEntry* qe = (qEntry*)(current->content);
-			free(qe->topicName);
-			free(qe->msg->payload);
+			MQTTProtocol_removePublication(qe->publication);
 			free(qe->msg);
 		}
 		ListEmpty(client->messageQueue);
@@ -2073,12 +2076,13 @@ thread_return_type WINAPI MQTTAsync_receiveThread(void* n)
 			if (m->c->messageQueue->count > 0 && m->ma)
 			{
 				qEntry* qe = (qEntry*)(m->c->messageQueue->first->content);
-				int topicLen = qe->topicLen;
+				// TODO: what is this?
+				//int topicLen = qe->publication->topicLen;
+				//
+				//if (strlen(qe->publication->topicName) == topicLen)
+				//	topicLen = 0;
 
-				if (strlen(qe->topicName) == topicLen)
-					topicLen = 0;
-
-				if (MQTTAsync_deliverMessage(m, qe->topicName, topicLen, qe->msg))
+				if (MQTTAsync_deliverMessage(m, qe->publication, qe->msg))
 				{
 #if !defined(NO_PERSISTENCE)
 					if (m->c->persistence)
@@ -2462,7 +2466,7 @@ static int clientStructCompare(void* a, void* b)
 	return m->c == (Clients*)b;
 }
 
-
+#if 0
 /*
  * Set destinationName and payload to NULL in all responses
  * for a client, so that these memory locations aren't freed twice as they
@@ -2482,7 +2486,7 @@ void MQTTAsync_NULLPublishResponses(MQTTAsyncs* m)
 			if (command->command.type == PUBLISH)
 			{
 				/* these values are going to be freed in RemovePublication */
-				command->command.details.pub.destinationName = NULL;
+				command->command.details.destinationName = NULL;
 				command->command.details.pub.payload = NULL;
 			}
 		}
@@ -2520,7 +2524,7 @@ void MQTTAsync_NULLPublishCommands(MQTTAsyncs* m)
 	}
 	FUNC_EXIT;
 }
-
+#endif
 
 /**
  * Clean the MQTT session data.  This includes the MQTT inflight messages, because
@@ -2543,7 +2547,6 @@ static int MQTTAsync_cleanSession(Clients* client)
 	if ((found = ListFindItem(MQTTAsync_handles, client, clientStructCompare)) != NULL)
 	{
 		MQTTAsyncs* m = (MQTTAsyncs*)(found->content);
-		MQTTAsync_NULLPublishResponses(m);
 		MQTTAsync_freeResponses(m);
 	}
 	else
@@ -2561,13 +2564,13 @@ static int MQTTAsync_cleanSession(Clients* client)
 * @param mm the message to be delivered
 * @return boolean 1 means message has been delivered, 0 that it has not
 */
-static int MQTTAsync_deliverMessage(MQTTAsyncs* m, char* topicName, size_t topicLen, MQTTAsync_message* mm)
+static int MQTTAsync_deliverMessage(MQTTAsyncs* m, Publications* publication, MQTTAsync_message* mm)
 {
 	int rc;
 
 	Log(TRACE_MIN, -1, "Calling messageArrived for client %s, queue depth %d",
 					m->c->clientID, m->c->messageQueue->count);
-	rc = (*(m->ma))(m->maContext, topicName, (int)topicLen, mm);
+	rc = (*(m->ma))(m->maContext, publication->topic, (int)publication->topiclen, mm);
 	/* if 0 (false) is returned by the callback then it failed, so we don't remove the message from
 	 * the queue, and it will be retried later.  If 1 is returned then the message data may have been freed,
 	 * so we must be careful how we use it.
@@ -2587,17 +2590,9 @@ void Protocol_processPublication(Publish* publish, Clients* client, int allocate
 		goto exit;
 	memcpy(mm, &initialized, sizeof(MQTTAsync_message));
 
-	if (allocatePayload)
-	{
-		if ((mm->payload = malloc(publish->payloadlen)) == NULL)
-		{
-			free(mm);
-			goto exit;
-		}
-		memcpy(mm->payload, publish->payload, publish->payloadlen);
-	} else
-		mm->payload = publish->payload;
-	mm->payloadlen = publish->payloadlen;
+	mm->payload = publish->publication->payload;
+	mm->payloadlen = publish->publication->payloadlen;
+	publish->publication->refcount++;
 	mm->qos = publish->header.bits.qos;
 	mm->retained = publish->header.bits.retain;
 	if (publish->header.bits.qos == 2)
@@ -2620,7 +2615,7 @@ void Protocol_processPublication(Publish* publish, Clients* client, int allocate
 			MQTTAsyncs* m = (MQTTAsyncs*)(found->content);
 
 			if (m->ma)
-				rc = MQTTAsync_deliverMessage(m, publish->topic, publish->topiclen, mm);
+				rc = MQTTAsync_deliverMessage(m, publish->publication, mm);
 			else
 				Log(LOG_ERROR, -1, "Message arrived for client %s but can't deliver it. No messageArrived callback",
 						m->c->clientID);
@@ -2634,16 +2629,17 @@ void Protocol_processPublication(Publish* publish, Clients* client, int allocate
 		if (!qe)
 			goto exit;
 		qe->msg = mm;
-		qe->topicName = publish->topic;
-		qe->topicLen = publish->topiclen;
-		ListAppend(client->messageQueue, qe, sizeof(qe) + sizeof(mm) + mm->payloadlen + strlen(qe->topicName)+1);
+		qe->publication = publish->publication;
+		publish->publication->refcount++;
+		ListAppend(client->messageQueue, qe, sizeof(qe) + sizeof(mm) + mm->payloadlen + strlen(qe->publication->topic)+1);
 #if !defined(NO_PERSISTENCE)
 		if (client->persistence)
 			MQTTPersistence_persistQueueEntry(client, (MQTTPersistence_qEntry*)qe);
 #endif
 	}
 exit:
-	publish->topic = NULL;
+	MQTTProtocol_removePublication(publish->publication);
+	publish->publication = NULL;
 	FUNC_EXIT;
 }
 
@@ -3119,9 +3115,9 @@ static MQTTPacket* MQTTAsync_cycle(SOCKET* sock, unsigned long timeout, int* rc)
 								MQTTAsync_successData data;
 
 								data.token = command->command.token;
-								data.alt.pub.destinationName = command->command.details.pub.destinationName;
-								data.alt.pub.message.payload = command->command.details.pub.payload;
-								data.alt.pub.message.payloadlen = command->command.details.pub.payloadlen;
+								data.alt.pub.destinationName = command->command.details.pub.publication->topic;
+								data.alt.pub.message.payload = command->command.details.pub.publication->payload;
+								data.alt.pub.message.payloadlen = command->command.details.pub.publication->payloadlen;
 								data.alt.pub.message.qos = command->command.details.pub.qos;
 								data.alt.pub.message.retained = command->command.details.pub.retained;
 								Log(TRACE_MIN, -1, "Calling publish success for client %s", m->c->clientID);
@@ -3132,9 +3128,9 @@ static MQTTPacket* MQTTAsync_cycle(SOCKET* sock, unsigned long timeout, int* rc)
 								MQTTAsync_successData5 data = MQTTAsync_successData5_initializer;
 
 								data.token = command->command.token;
-								data.alt.pub.destinationName = command->command.details.pub.destinationName;
-								data.alt.pub.message.payload = command->command.details.pub.payload;
-								data.alt.pub.message.payloadlen = command->command.details.pub.payloadlen;
+								data.alt.pub.destinationName = command->command.details.pub.publication->topic;
+								data.alt.pub.message.payload = command->command.details.pub.publication->payload;
+								data.alt.pub.message.payloadlen = command->command.details.pub.publication->payloadlen;
 								data.alt.pub.message.qos = command->command.details.pub.qos;
 								data.alt.pub.message.retained = command->command.details.pub.retained;
 								data.properties = command->command.properties;
@@ -3156,11 +3152,6 @@ static MQTTPacket* MQTTAsync_cycle(SOCKET* sock, unsigned long timeout, int* rc)
 							{
 								MQTTProtocol_removePublication(pubToRemove);
 								pubToRemove = NULL;
-								/* removePublication has freed the topic and payload memory, so here we indicate that
-								 * so freeCommand doesn't try to free them again.
-								 */
-								command->command.details.pub.destinationName = NULL;
-								command->command.details.pub.payload = NULL;
 							}
 							MQTTAsync_freeCommand(command);
 							break;

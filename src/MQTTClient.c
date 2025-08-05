@@ -1160,23 +1160,23 @@ void Protocol_processPublication(Publish* publish, Clients* client, int allocate
 	memcpy(mm, &initialized, sizeof(MQTTClient_message));
 
 	qe->msg = mm;
-	qe->topicName = publish->topic;
-	qe->topicLen = publish->topiclen;
-	publish->topic = NULL;
+	qe->topicName = publish->publication->topic;
+	qe->topicLen = publish->publication->topiclen;
+	publish->publication->topic = NULL;
 	if (allocatePayload)
 	{
-		mm->payload = malloc(publish->payloadlen);
+		mm->payload = malloc(publish->publication->payloadlen);
 		if (mm->payload == NULL)
 		{
 			free(mm);
 			free(qe);
 			goto exit;
 		}
-		memcpy(mm->payload, publish->payload, publish->payloadlen);
+		memcpy(mm->payload, publish->publication->payload, publish->publication->payloadlen);
 	}
 	else
-		mm->payload = publish->payload;
-	mm->payloadlen = publish->payloadlen;
+		mm->payload = publish->publication->payload;
+	mm->payloadlen = publish->publication->payloadlen;
 	mm->qos = publish->header.bits.qos;
 	mm->retained = publish->header.bits.retain;
 	if (publish->header.bits.qos == 2)
@@ -2390,19 +2390,25 @@ MQTTResponse MQTTClient_publish5(MQTTClient handle, const char* topicName, int p
 		rc = PAHO_MEMORY_ERROR;
 		goto exit_and_free;
 	}
-	memset(p->mask, '\0', sizeof(p->mask));
-	p->payload = NULL;
-	p->payloadlen = payloadlen;
+	if ((p->publication = malloc(sizeof(Publications))) == NULL)
+	{
+		rc = PAHO_MEMORY_ERROR;
+		goto exit_and_free;
+	}
+        p->publication->refcount = 1;
+	memset(p->publication->mask, '\0', sizeof(p->publication->mask));
+	p->publication->payload = NULL;
+	p->publication->payloadlen = payloadlen;
 	if (payloadlen > 0)
 	{
-		if ((p->payload = malloc(payloadlen)) == NULL)
+		if ((p->publication->payload = malloc(payloadlen)) == NULL)
 		{
 			rc = PAHO_MEMORY_ERROR;
 			goto exit_and_free;
 		}
-		memcpy(p->payload, payload, payloadlen);
+		memcpy(p->publication->payload, payload, payloadlen);
 	}
-	if ((p->topic = MQTTStrdup(topicName)) == NULL)
+	if ((p->publication->topic = MQTTStrdup(topicName)) == NULL)
 	{
 		rc = PAHO_MEMORY_ERROR;
 		goto exit_and_free;
@@ -2453,11 +2459,15 @@ MQTTResponse MQTTClient_publish5(MQTTClient handle, const char* topicName, int p
 exit_and_free:
 	if (p)
 	{
-		if (p->topic)
-			free(p->topic);
-		if (p->payload)
-			free(p->payload);
-		free(p);
+          if (p->publication)
+          {
+		if (p->publication->topic)
+			free(p->publication->topic);
+		if (p->publication->payload)
+			free(p->publication->payload);
+         	free(p->publication);
+          }
+	  free(p);
 	}
 
 	if (rc == SOCKET_ERROR)

@@ -33,8 +33,7 @@ enum MQTTAsync_threadStates
 typedef struct
 {
 	MQTTAsync_message* msg;
-	char* topicName;
-	int topicLen;
+	Publications* publication;
 	unsigned int seqno; /* only used on restore */
 } qEntry;
 
@@ -66,9 +65,7 @@ typedef struct
 		} unsub;
 		struct
 		{
-			char* destinationName;
-			int payloadlen;
-			void* payload;
+			Publications* publication;
 			int qos;
 			int retained;
 		} pub;

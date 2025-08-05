@@ -197,14 +197,10 @@ typedef struct
 typedef struct
 {
 	Header header;	/**< MQTT header byte */
-	char* topic;	/**< topic string */
-	int topiclen;
 	int msgId;		/**< MQTT message id */
-	char* payload;	/**< binary payload, length delimited */
-	int payloadlen;	/**< payload length */
 	int MQTTVersion;  /**< the version of MQTT */
 	MQTTProperties properties; /**< MQTT 5.0 properties.  Not used for MQTT < 5.0 */
-	uint8_t mask[4]; /**< the websockets mask the payload is masked with, if any */
+        Publications* publication; /**< the publication data */
 } Publish;
 
 

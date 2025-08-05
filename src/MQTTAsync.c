@@ -496,9 +496,7 @@ void MQTTAsync_destroy(MQTTAsync* handle)
 
 	MQTTAsync_closeSession(m->c, MQTTREASONCODE_SUCCESS, NULL);
 
-	MQTTAsync_NULLPublishResponses(m);
 	MQTTAsync_freeResponses(m);
-	MQTTAsync_NULLPublishCommands(m);
 	MQTTAsync_freeCommands(m);
 	ListFree(m->responses);
 
@@ -1267,21 +1265,29 @@ int MQTTAsync_send(MQTTAsync handle, const char* destinationName, int payloadlen
 		if (m->c->MQTTVersion >= MQTTVERSION_5)
 			pub->command.properties = MQTTProperties_copy(&response->properties);
 	}
-	if ((pub->command.details.pub.destinationName = MQTTStrdup(destinationName)) == NULL)
+	if ((pub->command.details.pub.publication = malloc(sizeof(Publications))) == NULL)
 	{
 		free(pub);
 		rc = PAHO_MEMORY_ERROR;
 		goto exit;
 	}
-	pub->command.details.pub.payloadlen = payloadlen;
-	if ((pub->command.details.pub.payload = malloc(payloadlen)) == NULL)
+	if ((pub->command.details.pub.publication->topic = MQTTStrdup(destinationName)) == NULL)
 	{
-		free(pub->command.details.pub.destinationName);
+                free(pub->command.details.pub.publication);
 		free(pub);
 		rc = PAHO_MEMORY_ERROR;
 		goto exit;
 	}
-	memcpy(pub->command.details.pub.payload, payload, payloadlen);
+        pub->command.details.pub.publication->topiclen = strlen(pub->command.details.pub.publication->topic) + 1;
+	pub->command.details.pub.publication->payloadlen = payloadlen;
+	if ((pub->command.details.pub.publication->payload = malloc(payloadlen)) == NULL)
+	{
+		free(pub->command.details.pub.publication->topic);
+		free(pub);
+		rc = PAHO_MEMORY_ERROR;
+		goto exit;
+	}
+	memcpy(pub->command.details.pub.publication->payload, payload, payloadlen);
 	pub->command.details.pub.qos = qos;
 	pub->command.details.pub.retained = retained;
 	rc = MQTTAsync_addCommand(pub, sizeof(pub));

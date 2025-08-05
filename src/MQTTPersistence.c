@@ -258,7 +258,7 @@ int MQTTPersistence_restorePackets(Clients *c)
 							free(msg->publish->topic);
 							msg->publish->payload = msg->publish->topic = NULL;
 						}
-						publish->topic = NULL;
+						publish->publication->topic = NULL;
 						MQTTPacket_freePublish(publish);
 						msgs_rcvd++;
 					}
@@ -296,7 +296,7 @@ int MQTTPersistence_restorePackets(Clients *c)
 							/* retry at the first opportunity */
 							memset(&msg->lastTouch, '\0', sizeof(msg->lastTouch));
 							MQTTPersistence_insertInOrder(c->outboundMsgs, msg, msg->len);
-							publish->topic = NULL;
+							publish->publication->topic = NULL;
 							MQTTPacket_freePublish(publish);
 							msgs_sent++;
 						}

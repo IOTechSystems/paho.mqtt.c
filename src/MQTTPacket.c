@@ -562,11 +562,18 @@ void* MQTTPacket_publish(int MQTTVersion, unsigned char aHeader, char* data, siz
 	FUNC_ENTRY;
 	if ((pack = malloc(sizeof(Publish))) == NULL)
 		goto exit;
+	if ((pack->publication = malloc(sizeof(Publications))) == NULL)
+        {
+          	free(pack);
+          	pack = NULL;
+		goto exit;
+        }
 	memset(pack, '\0', sizeof(Publish));
 	pack->MQTTVersion = MQTTVersion;
 	pack->header.byte = aHeader;
-	if ((pack->topic = readUTFlen(&curdata, enddata, &pack->topiclen)) == NULL) /* Topic name on which to publish */
+	if ((pack->publication->topic = readUTFlen(&curdata, enddata, &pack->publication->topiclen)) == NULL) /* Topic name on which to publish */
 	{
+		free(pack->publication);
 		free(pack);
 		pack = NULL;
 		goto exit;
@@ -575,6 +582,7 @@ void* MQTTPacket_publish(int MQTTVersion, unsigned char aHeader, char* data, siz
 	{
 		if (enddata - curdata < 2)  /* Is there enough data for the msgid? */
 		{
+			free(pack->publication);
 			free(pack);
 			pack = NULL;
 			goto exit;
@@ -589,6 +597,7 @@ void* MQTTPacket_publish(int MQTTVersion, unsigned char aHeader, char* data, siz
 		pack->properties = props;
 		if (MQTTProperties_read(&pack->properties, &curdata, enddata) != 1)
 		{
+                	free(pack->publication);
 			if (pack->properties.array)
 				free(pack->properties.array);
 			if (pack)
@@ -597,8 +606,8 @@ void* MQTTPacket_publish(int MQTTVersion, unsigned char aHeader, char* data, siz
 			goto exit;
 		}
 	}
-	pack->payload = curdata;
-	pack->payloadlen = (int)(datalen-(curdata-data));
+	pack->publication->payload = curdata;
+	pack->publication->payloadlen = (int)(datalen-(curdata-data));
 exit:
 	FUNC_EXIT;
 	return pack;
@@ -612,8 +621,9 @@ exit:
 void MQTTPacket_freePublish(Publish* pack)
 {
 	FUNC_ENTRY;
-	if (pack->topic != NULL)
-		free(pack->topic);
+	if (pack->publication->topic != NULL)
+		free(pack->publication->topic);
+       	free(pack->publication);
 	if (pack->MQTTVersion >= MQTTVERSION_5)
 		MQTTProperties_free(&pack->properties);
 	free(pack);
@@ -871,10 +881,10 @@ int MQTTPacket_send_publish(Publish* pack, int dup, int qos, int retained, netwo
 	{
 		int buflen = ((qos > 0) ? 2 : 0) + ((pack->MQTTVersion >= 5) ? MQTTProperties_len(&pack->properties) : 0);
 		char *ptr = NULL;
-		char* bufs[4] = {topiclen, pack->topic, NULL, pack->payload};
-		size_t lens[4] = {2, strlen(pack->topic), buflen, pack->payloadlen};
+		char* bufs[4] = {topiclen, pack->publication->topic, NULL, pack->publication->payload};
+		size_t lens[4] = {2, strlen(pack->publication->topic), buflen, pack->publication->payloadlen};
 		int frees[4] = {1, 0, 1, 0};
-		PacketBuffers packetbufs = {4, bufs, lens, frees, {pack->mask[0], pack->mask[1], pack->mask[2], pack->mask[3]}};
+		PacketBuffers packetbufs = {4, bufs, lens, frees, {pack->publication->mask[0], pack->publication->mask[1], pack->publication->mask[2], pack->publication->mask[3]}};
 
 		bufs[2] = ptr = malloc(buflen);
 		if (ptr == NULL)
@@ -889,26 +899,26 @@ int MQTTPacket_send_publish(Publish* pack, int dup, int qos, int retained, netwo
 		rc = MQTTPacket_sends(net, header, &packetbufs, pack->MQTTVersion);
 		if (rc != TCPSOCKET_INTERRUPTED)
 			free(bufs[2]);
-		memcpy(pack->mask, packetbufs.mask, sizeof(pack->mask));
+		memcpy(pack->publication->mask, packetbufs.mask, sizeof(pack->publication->mask));
 	}
 	else
 	{
 		char* ptr = topiclen;
-		char* bufs[3] = {topiclen, pack->topic, pack->payload};
-		size_t lens[3] = {2, strlen(pack->topic), pack->payloadlen};
+		char* bufs[3] = {topiclen, pack->publication->topic, pack->publication->payload};
+		size_t lens[3] = {2, strlen(pack->publication->topic), pack->publication->payloadlen};
 		int frees[3] = {1, 0, 0};
-		PacketBuffers packetbufs = {3, bufs, lens, frees, {pack->mask[0], pack->mask[1], pack->mask[2], pack->mask[3]}};
+		PacketBuffers packetbufs = {3, bufs, lens, frees, {pack->publication->mask[0], pack->publication->mask[1], pack->publication->mask[2], pack->publication->mask[3]}};
 
 		writeInt(&ptr, (int)lens[1]);
 		rc = MQTTPacket_sends(net, header, &packetbufs, pack->MQTTVersion);
-		memcpy(pack->mask, packetbufs.mask, sizeof(pack->mask));
+		memcpy(pack->publication->mask, packetbufs.mask, sizeof(pack->publication->mask));
 	}
 	if (qos == 0)
-		Log(LOG_PROTOCOL, 27, NULL, net->socket, clientID, retained, rc, pack->payloadlen,
-				min(20, pack->payloadlen), pack->payload);
+		Log(LOG_PROTOCOL, 27, NULL, net->socket, clientID, retained, rc, pack->publication->payloadlen,
+				min(20, pack->publication->payloadlen), pack->publication->payload);
 	else
-		Log(LOG_PROTOCOL, 10, NULL, net->socket, clientID, pack->msgId, qos, retained, rc, pack->payloadlen,
-				min(20, pack->payloadlen), pack->payload);
+		Log(LOG_PROTOCOL, 10, NULL, net->socket, clientID, pack->msgId, qos, retained, rc, pack->publication->payloadlen,
+				min(20, pack->publication->payloadlen), pack->publication->payload);
 exit_free:
 	if (rc != TCPSOCKET_INTERRUPTED)
 		free(topiclen);

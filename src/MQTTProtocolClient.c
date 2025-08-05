@@ -108,7 +108,7 @@ int MQTTProtocol_assignMsgId(Clients* client)
 
 static void MQTTProtocol_storeQoS0(Clients* pubclient, Publish* publish)
 {
-	int len;
+	int len = 0;
 	pending_write* pw = NULL;
 
 	FUNC_ENTRY;
@@ -132,7 +132,7 @@ static void MQTTProtocol_storeQoS0(Clients* pubclient, Publish* publish)
 	the saved copy is */
 	if (SocketBuffer_updateWrite(pw->socket, pw->p->topic, pw->p->payload) == NULL)
 		Log(LOG_SEVERE, 0, "Error updating write");
-	publish->payload = publish->topic = NULL;
+	// publish->publication->payload = publish->publication->topic = NULL; // TODO: is this an issue?
 exit:
 	FUNC_EXIT;
 }
@@ -174,21 +174,27 @@ int MQTTProtocol_startPublish(Clients* pubclient, Publish* publish, int qos, int
 	int rc = 0;
 
 	FUNC_ENTRY;
+        if ((qos12pub.publication = malloc(sizeof(Publications))) == NULL)
+	{
+		rc = PAHO_MEMORY_ERROR;
+		goto exit;
+	}
 	if (qos > 0)
 	{
 		*mm = MQTTProtocol_createMessage(publish, mm, qos, retained, 0);
 		ListAppend(pubclient->outboundMsgs, *mm, (*mm)->len);
 		/* we change these pointers to the saved message location just in case the packet could not be written
 		entirely; the socket buffer will use these locations to finish writing the packet */
-		qos12pub.payload = (*mm)->publish->payload;
-		qos12pub.topic = (*mm)->publish->topic;
+		qos12pub.publication->payload = (*mm)->publish->payload;
+		qos12pub.publication->topic = (*mm)->publish->topic;
 		qos12pub.properties = (*mm)->properties;
 		qos12pub.MQTTVersion = (*mm)->MQTTVersion;
 		publish = &qos12pub;
 	}
 	rc = MQTTProtocol_startPublishCommon(pubclient, publish, qos, retained);
 	if (qos > 0)
-		memcpy((*mm)->publish->mask, publish->mask, sizeof((*mm)->publish->mask));
+		memcpy((*mm)->publish->mask, publish->publication->mask, sizeof((*mm)->publish->mask));
+exit:
 	FUNC_EXIT_RC(rc);
 	return rc;
 }
@@ -213,7 +219,7 @@ Messages* MQTTProtocol_createMessage(Publish* publish, Messages **mm, int qos, i
 	m->len = sizeof(Messages);
 	if (*mm == NULL || (*mm)->publish == NULL)
 	{
-		int len1;
+		int len1 = 0;
 		*mm = m;
 		if ((m->publish = MQTTProtocol_storePublication(publish, &len1)) == NULL)
 		{
@@ -261,29 +267,16 @@ exit:
  */
 Publications* MQTTProtocol_storePublication(Publish* publish, int* len)
 {
-	Publications* p = malloc(sizeof(Publications));
+	Publications* p = publish->publication;
 
 	FUNC_ENTRY;
-	if (!p)
-		goto exit;
-	p->refcount = 1;
-	*len = (int)strlen(publish->topic)+1;
-	p->topic = publish->topic;
-	publish->topic = NULL;
-	*len += sizeof(Publications);
-	p->topiclen = publish->topiclen;
-	p->payloadlen = publish->payloadlen;
-	p->payload = publish->payload;
-	publish->payload = NULL;
-	*len += publish->payloadlen;
-	memcpy(p->mask, publish->mask, sizeof(p->mask));
+	p->refcount++;
 
 	if ((ListAppend(&(state.publications), p, *len)) == NULL)
 	{
-		free(p);
+		p->refcount--;
 		p = NULL;
 	}
-exit:
 	FUNC_EXIT;
 	return p;
 }
@@ -332,7 +325,7 @@ int MQTTProtocol_handlePublishes(void* pack, SOCKET sock)
 	client = (Clients*)(ListFindItem(bstate->clients, &sock, clientSocketCompare)->content);
 	clientid = client->clientID;
 	Log(LOG_PROTOCOL, 11, NULL, sock, clientid, publish->msgId, publish->header.bits.qos,
-					publish->header.bits.retain, publish->payloadlen, min(20, publish->payloadlen), publish->payload);
+					publish->header.bits.retain, publish->publication->payloadlen, min(20, publish->publication->payloadlen), publish->publication->payload);
 
 	if (publish->header.bits.qos == 0)
 	{
@@ -354,7 +347,7 @@ int MQTTProtocol_handlePublishes(void* pack, SOCKET sock)
 	else if (publish->header.bits.qos == 2)
 	{
 		/* store publication in inbound list */
-		int len;
+		int len = 0;
 		int already_received = 0;
 		ListElement* listElem = NULL;
 		Messages* m = malloc(sizeof(Messages));
@@ -393,33 +386,20 @@ int MQTTProtocol_handlePublishes(void* pack, SOCKET sock)
 			publish1.header.bits.qos = m->qos;
 			publish1.header.bits.retain = m->retain;
 			publish1.msgId = m->msgid;
-			publish1.topic = m->publish->topic;
-			publish1.topiclen = m->publish->topiclen;
-			publish1.payload = m->publish->payload;
-			publish1.payloadlen = m->publish->payloadlen;
+			publish1.publication = m->publish;
+			publish1.publication->refcount++;
 			publish1.MQTTVersion = m->MQTTVersion;
 			publish1.properties = m->properties;
 
 			Protocol_processPublication(&publish1, client, 1);
 			ListRemove(&(state.publications), m->publish);
 			m->publish = NULL;
-		} else
-		{	/* allocate and copy payload data as it's needed for pubrel.
-		       For other cases, it's done in Protocol_processPublication */
-			char *temp = m->publish->payload;
-
-			if ((m->publish->payload = malloc(m->publish->payloadlen)) == NULL)
-			{
-				rc = PAHO_MEMORY_ERROR;
-				goto exit;
-			}
-			memcpy(m->publish->payload, temp, m->publish->payloadlen);
 		}
 		if (socketHasPendingWrites)
 			rc = MQTTProtocol_queueAck(client, PUBREC, publish->msgId);
 		else
 			rc = MQTTPacket_send_pubrec(publish->MQTTVersion, publish->msgId, &client->net, client->clientID);
-		publish->topic = NULL;
+		// publish->topic = NULL; // TODO: is this needed?
 	}
 exit:
 	MQTTPacket_freePublish(publish);
@@ -596,10 +576,8 @@ int MQTTProtocol_handlePubrels(void* pack, SOCKET sock)
 			publish.msgId = m->msgid;
 			if (m->publish)
 			{
-				publish.topic = m->publish->topic;
-				publish.topiclen = m->publish->topiclen;
-				publish.payload = m->publish->payload;
-				publish.payloadlen = m->publish->payloadlen;
+				publish.publication = m->publish;
+				publish.publication->refcount++;
 			}
 			publish.MQTTVersion = m->MQTTVersion;
 			if (publish.MQTTVersion >= MQTTVERSION_5)
@@ -819,14 +797,11 @@ static void MQTTProtocol_retries(START_TIME_TYPE now, Clients* client, int regar
 
 				Log(TRACE_MIN, 7, NULL, "PUBLISH", client->clientID, client->net.socket, m->msgid);
 				publish.msgId = m->msgid;
-				publish.topic = m->publish->topic;
-				publish.payload = m->publish->payload;
-				publish.payloadlen = m->publish->payloadlen;
+				publish.publication = m->publish;
+				publish.publication->refcount++;
 				publish.properties = m->properties;
 				publish.MQTTVersion = m->MQTTVersion;
-				memcpy(publish.mask, m->publish->mask, sizeof(publish.mask));
 				rc = MQTTPacket_send_publish(&publish, 1, m->qos, m->retain, &client->net, client->clientID);
-				memcpy(m->publish->mask, publish.mask, sizeof(m->publish->mask)); /* store websocket mask used in send */
 				if (rc == SOCKET_ERROR)
 				{
 					client->good = 0;
