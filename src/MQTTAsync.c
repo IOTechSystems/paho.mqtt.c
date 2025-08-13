@@ -41,6 +41,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #if !defined(_WIN32) && !defined(_WIN64)
 	#include <sys/time.h>
 #else
@@ -1847,9 +1848,10 @@ const char* MQTTAsync_strerror(int code)
 void MQTTAsync_freeMessage(MQTTAsync_message** message)
 {
 	FUNC_ENTRY;
-	MQTTProperties_free(&(*message)->properties);
-	free((*message)->payload);
-	free(*message);
+        MQTTAsync_message_wrapper* wrapper = (MQTTAsync_message_wrapper *)(((char *)*message) - offsetof(MQTTAsync_message_wrapper, message));
+	MQTTProperties_free(&(wrapper->message.properties));
+        MQTTProtocol_removePublication (wrapper->publication);
+	free(wrapper);
 	*message = NULL;
 	FUNC_EXIT;
 }

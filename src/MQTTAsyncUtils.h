@@ -154,6 +154,12 @@ typedef struct
 	char* key; /* if not_restored, this holds the key */
 } MQTTAsync_queuedCommand;
 
+typedef struct MQTTAsync_message_wrapper
+{
+  Publications* publication;
+  MQTTAsync_message message;
+} MQTTAsync_message_wrapper;
+
 void MQTTAsync_lock_mutex(mutex_type amutex);
 void MQTTAsync_unlock_mutex(mutex_type amutex);
 void MQTTAsync_terminate(void);

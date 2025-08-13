@@ -562,13 +562,13 @@ void* MQTTPacket_publish(int MQTTVersion, unsigned char aHeader, char* data, siz
 	FUNC_ENTRY;
 	if ((pack = malloc(sizeof(Publish))) == NULL)
 		goto exit;
+	memset(pack, '\0', sizeof(Publish));
 	if ((pack->publication = malloc(sizeof(Publications))) == NULL)
         {
           	free(pack);
           	pack = NULL;
 		goto exit;
         }
-	memset(pack, '\0', sizeof(Publish));
 	pack->MQTTVersion = MQTTVersion;
 	pack->header.byte = aHeader;
 	if ((pack->publication->topic = readUTFlen(&curdata, enddata, &pack->publication->topiclen)) == NULL) /* Topic name on which to publish */

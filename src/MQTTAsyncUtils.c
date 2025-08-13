@@ -2571,6 +2571,7 @@ static int MQTTAsync_deliverMessage(MQTTAsyncs* m, Publications* publication, MQ
 	Log(TRACE_MIN, -1, "Calling messageArrived for client %s, queue depth %d",
 					m->c->clientID, m->c->messageQueue->count);
 	rc = (*(m->ma))(m->maContext, publication->topic, (int)publication->topiclen, mm);
+
 	/* if 0 (false) is returned by the callback then it failed, so we don't remove the message from
 	 * the queue, and it will be retried later.  If 1 is returned then the message data may have been freed,
 	 * so we must be careful how we use it.
@@ -2581,13 +2582,16 @@ static int MQTTAsync_deliverMessage(MQTTAsyncs* m, Publications* publication, MQ
 
 void Protocol_processPublication(Publish* publish, Clients* client, int allocatePayload)
 {
+  MQTTAsync_message_wrapper* wrapper;
 	MQTTAsync_message* mm = NULL;
 	MQTTAsync_message initialized = MQTTAsync_message_initializer;
 	int rc = 0;
 
 	FUNC_ENTRY;
-	if ((mm = malloc(sizeof(MQTTAsync_message))) == NULL)
+	if ((wrapper = malloc(sizeof(MQTTAsync_message_wrapper))) == NULL)
 		goto exit;
+        wrapper->publication = publish->publication;
+        mm = &wrapper->message;
 	memcpy(mm, &initialized, sizeof(MQTTAsync_message));
 
 	mm->payload = publish->publication->payload;
@@ -2615,7 +2619,10 @@ void Protocol_processPublication(Publish* publish, Clients* client, int allocate
 			MQTTAsyncs* m = (MQTTAsyncs*)(found->content);
 
 			if (m->ma)
+                        {
+                          publish->publication->refcount++;
 				rc = MQTTAsync_deliverMessage(m, publish->publication, mm);
+                        }
 			else
 				Log(LOG_ERROR, -1, "Message arrived for client %s but can't deliver it. No messageArrived callback",
 						m->c->clientID);
@@ -2639,7 +2646,6 @@ void Protocol_processPublication(Publish* publish, Clients* client, int allocate
 	}
 exit:
 	MQTTProtocol_removePublication(publish->publication);
-	publish->publication = NULL;
 	FUNC_EXIT;
 }
 
