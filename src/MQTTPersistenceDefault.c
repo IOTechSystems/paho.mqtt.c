@@ -828,7 +828,7 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 		if((dp = opendir(dirname)) != NULL)
 		{
 			i = 0;
-			while((dir_entry = readdir(dp)) != NULL)
+			while(((dir_entry = readdir(dp)) != NULL) && (i < nfkeys))
 			{
 				size_t allocsize = strlen(dirname)+strlen(dir_entry->d_name)+2;
 				char* temp = malloc(allocsize);
