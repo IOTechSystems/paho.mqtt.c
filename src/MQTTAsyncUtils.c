@@ -618,7 +618,7 @@ static int cmpkeys(const void *p1, const void *p2)
 int MQTTAsync_restoreCommands(MQTTAsyncs* client)
 {
 	int rc = 0;
-	char **msgkeys;
+	char **msgkeys = NULL;
 	int nkeys;
 	int i = 0;
 	Clients* c = client->c;
@@ -687,7 +687,7 @@ int MQTTAsync_restoreCommands(MQTTAsyncs* client)
 int MQTTAsync_unpersistCommandsAndMessages(Clients* c)
 {
 	int rc = 0;
-	char **msgkeys;
+	char **msgkeys = NULL;
 	int nkeys;
 	int i = 0;
 	int messages_deleted = 0;
@@ -723,7 +723,7 @@ int MQTTAsync_unpersistCommandsAndMessages(Clients* c)
 static int MQTTAsync_unpersistInflightMessages(Clients* c)
 {
 	int rc = 0;
-	char **msgkeys;
+	char **msgkeys = NULL;
 	int nkeys;
 	int i = 0;
 	int messages_deleted = 0;
