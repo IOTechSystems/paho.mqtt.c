@@ -870,7 +870,7 @@ int MQTTPersistence_restoreMessageQueue(Clients* c)
 {
 	int rc = 0;
 	char **msgkeys = NULL;
-	int nkeys;
+	int nkeys = 0;
 	int i = 0;
 	int entries_restored = 0;
 

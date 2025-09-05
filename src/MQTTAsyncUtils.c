@@ -619,7 +619,7 @@ int MQTTAsync_restoreCommands(MQTTAsyncs* client)
 {
 	int rc = 0;
 	char **msgkeys = NULL;
-	int nkeys;
+	int nkeys = 0;
 	int i = 0;
 	Clients* c = client->c;
 	int commands_restored = 0;
@@ -688,7 +688,7 @@ int MQTTAsync_unpersistCommandsAndMessages(Clients* c)
 {
 	int rc = 0;
 	char **msgkeys = NULL;
-	int nkeys;
+	int nkeys = 0;
 	int i = 0;
 	int messages_deleted = 0;
 
@@ -724,7 +724,7 @@ static int MQTTAsync_unpersistInflightMessages(Clients* c)
 {
 	int rc = 0;
 	char **msgkeys = NULL;
-	int nkeys;
+	int nkeys = 0;
 	int i = 0;
 	int messages_deleted = 0;
 
