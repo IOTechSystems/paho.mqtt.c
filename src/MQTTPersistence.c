@@ -869,8 +869,8 @@ static void MQTTPersistence_insertInSeqOrder(List* list, MQTTPersistence_qEntry*
 int MQTTPersistence_restoreMessageQueue(Clients* c)
 {
 	int rc = 0;
-	char **msgkeys;
-	int nkeys;
+	char **msgkeys = NULL;
+	int nkeys = 0;
 	int i = 0;
 	int entries_restored = 0;
 
