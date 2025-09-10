@@ -491,7 +491,7 @@ int test_mutex(struct Options options)
 int main(int argc, char** argv)
 {
 	int rc = -1;
- 	int (*tests[])() = {NULL,
+ 	int (*tests[])(struct Options options) = {NULL,
  		test_mutex,
  		test_sem,
 #if !defined(_WIN32) && !defined(_WIN64)
