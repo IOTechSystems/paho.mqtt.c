@@ -2812,7 +2812,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
-	int (*tests[])() = { NULL, test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11};
+	int (*tests[])(struct Options options) = { NULL, test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11};
 	time_t randtime;
 
 	srand((unsigned) time(&randtime));

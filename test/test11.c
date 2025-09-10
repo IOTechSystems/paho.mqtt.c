@@ -2091,7 +2091,7 @@ void trace_callback(enum MQTTASYNC_TRACE_LEVELS level, char* message)
 int main(int argc, char** argv)
 {
 	int rc = -1;
- 	int (*tests[])() = {NULL,
+ 	int (*tests[])(struct Options options) = {NULL,
  		test_client_topic_aliases,
 		test_server_topic_aliases,
 		test_subscription_ids,

@@ -1814,7 +1814,7 @@ int main(int argc, char** argv)
 {
 	int rc = 0,
 		i;
- 	int (*tests[])() = {NULL,
+ 	int (*tests[])(struct Options options) = {NULL,
  		test_client_topic_aliases,
 		test_server_topic_aliases,
  		test_subscription_ids,

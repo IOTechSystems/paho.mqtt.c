@@ -538,7 +538,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
-	int (*tests[])() = { NULL, test7 };
+	int (*tests[])(struct Options options) = { NULL, test7 };
 	time_t randtime;
 
 	srand((unsigned) time(&randtime));

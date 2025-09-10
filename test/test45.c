@@ -2045,7 +2045,7 @@ void trace_callback(enum MQTTASYNC_TRACE_LEVELS level, char* message)
 int main(int argc, char** argv)
 {
 	int rc = -1;
- 	int (*tests[])() = {NULL, test1, test2, test3, test4, test5, test6, test7, test8}; /* indexed starting from 1 */
+ 	int (*tests[])(struct Options options) = {NULL, test1, test2, test3, test4, test5, test6, test7, test8}; /* indexed starting from 1 */
 	MQTTAsync_nameValue* info;
 	int i;
 

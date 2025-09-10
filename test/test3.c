@@ -1704,7 +1704,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
- 	int (*tests[])() = {NULL, test1, test2a_s, test2a_m, test2b, test2c, test3a_s, test3a_m, test3b, test4_s, test4_m, test6,
+ 	int (*tests[])(struct Options options) = {NULL, test1, test2a_s, test2a_m, test2b, test2c, test3a_s, test3a_m, test3b, test4_s, test4_m, test6,
  	  test2e_s /*test5a, test5b,test5c */};
 	//MQTTClient_nameValue* info;
 

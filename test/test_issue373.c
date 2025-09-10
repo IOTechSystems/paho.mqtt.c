@@ -380,7 +380,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
-	int (*tests[])() = { NULL, test_373};
+	int (*tests[])(struct Options options) = { NULL, test_373};
 	unsigned int QoS;
 
 	sprintf(unique, "%u", rand());

@@ -2697,7 +2697,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
-	int (*tests[])() =
+	int (*tests[])(struct Options options) =
             { NULL, test1, test2a, test2b, test2c, test2d, test3a, test3b, test4, /* test5a,
 			test5b, test5c, */ test6, test7, test8, test9, test10, test2e };
 

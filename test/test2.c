@@ -676,7 +676,7 @@ exit:
 int main(int argc, char** argv)
 {
 	int rc = 0;
- 	int (*tests[])() = {NULL, test1};
+ 	int (*tests[])(struct Options options) = {NULL, test1};
 	int i;
 
 	#if defined(_WIN32) || defined(_WIN64)
