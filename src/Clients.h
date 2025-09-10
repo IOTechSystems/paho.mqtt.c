@@ -23,6 +23,7 @@
 #define CLIENTS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "MQTTTime.h"
 #if defined(_WIN32) || defined(_WIN64)
 #include <winsock2.h>
