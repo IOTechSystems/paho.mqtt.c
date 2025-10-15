@@ -897,12 +897,13 @@ int MQTTAsync_addCommand(MQTTAsync_queuedCommand* command, int command_size)
 						MQTTAsync_unpersistCommand(first_publish);
 #endif
 
+					const MQTTAsync_token token = first_publish->command.token;
 					MQTTAsync_freeCommand(first_publish);
 
 					/* notify callback */
 					if (command->client->md)
 					{
-						(*(command->client->md))(command->client->mdContext, first_publish->command.token);
+						(*(command->client->md))(command->client->mdContext, token);
 					}
 				}
 			}
