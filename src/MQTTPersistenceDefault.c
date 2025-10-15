@@ -779,7 +779,7 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 	char **fkeys = NULL;
 	int nfkeys = 0;
 	char *ptraux;
-	int i;
+	int i = 0;
 	DIR *dp = NULL;
 	struct dirent *dir_entry;
 	struct stat stat_info;
@@ -818,7 +818,7 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 
 	if (nfkeys != 0)
 	{
-		if ((fkeys = (char **)malloc(nfkeys * sizeof(char *))) == NULL)
+		if ((fkeys = (char **)calloc(nfkeys, sizeof(char *))) == NULL)
 		{
 			rc = PAHO_MEMORY_ERROR;
 			goto exit;
@@ -879,7 +879,7 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 		}
 	}
 
-	*nkeys = nfkeys;
+	*nkeys = i;
 	*keys = fkeys;
 	/* the caller must free keys */
 
