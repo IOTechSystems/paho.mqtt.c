@@ -733,20 +733,22 @@ static int MQTTAsync_unpersistInflightMessages(Clients* c)
 	{
 		while (rc == 0 && i < nkeys)
 		{
-			if (strncmp(msgkeys[i], PERSISTENCE_PUBLISH_SENT, strlen(PERSISTENCE_PUBLISH_SENT)) == 0 ||
-				strncmp(msgkeys[i], PERSISTENCE_V5_PUBLISH_SENT, strlen(PERSISTENCE_V5_PUBLISH_SENT)) == 0 ||
-				strncmp(msgkeys[i], PERSISTENCE_PUBREL, strlen(PERSISTENCE_PUBREL)) == 0 ||
-				strncmp(msgkeys[i], PERSISTENCE_V5_PUBREL, strlen(PERSISTENCE_V5_PUBREL)) == 0 ||
-				strncmp(msgkeys[i], PERSISTENCE_PUBLISH_RECEIVED, strlen(PERSISTENCE_PUBLISH_RECEIVED)) == 0 ||
-				strncmp(msgkeys[i], PERSISTENCE_V5_PUBLISH_RECEIVED, strlen(PERSISTENCE_V5_PUBLISH_RECEIVED)) == 0)
+			if (msgkeys[i] != NULL)
 			{
-				if ((rc = c->persistence->premove(c->phandle, msgkeys[i])) == 0)
-					messages_deleted++;
-				else
-					Log(LOG_ERROR, 0, "Error %d removing inflight message from persistence", rc);
-			}
-			if (msgkeys[i])
+				if (strncmp(msgkeys[i], PERSISTENCE_PUBLISH_SENT, strlen(PERSISTENCE_PUBLISH_SENT)) == 0 ||
+					strncmp(msgkeys[i], PERSISTENCE_V5_PUBLISH_SENT, strlen(PERSISTENCE_V5_PUBLISH_SENT)) == 0 ||
+					strncmp(msgkeys[i], PERSISTENCE_PUBREL, strlen(PERSISTENCE_PUBREL)) == 0 ||
+					strncmp(msgkeys[i], PERSISTENCE_V5_PUBREL, strlen(PERSISTENCE_V5_PUBREL)) == 0 ||
+					strncmp(msgkeys[i], PERSISTENCE_PUBLISH_RECEIVED, strlen(PERSISTENCE_PUBLISH_RECEIVED)) == 0 ||
+					strncmp(msgkeys[i], PERSISTENCE_V5_PUBLISH_RECEIVED, strlen(PERSISTENCE_V5_PUBLISH_RECEIVED)) == 0)
+				{
+					if ((rc = c->persistence->premove(c->phandle, msgkeys[i])) == 0)
+						messages_deleted++;
+					else
+						Log(LOG_ERROR, 0, "Error %d removing inflight message from persistence", rc);
+				}
 				free(msgkeys[i]);
+			}
 			i++;
 		}
 		if (msgkeys != NULL)
