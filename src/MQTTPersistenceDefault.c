@@ -778,110 +778,91 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 	int rc = 0;
 	char **fkeys = NULL;
 	int nfkeys = 0;
-	char *ptraux;
-	int i = 0;
+	int capacity = 16;
 	DIR *dp = NULL;
 	struct dirent *dir_entry;
 	struct stat stat_info;
 
-	FUNC_ENTRY;
-	/* get number of keys */
-	if((dp = opendir(dirname)) != NULL)
+	if ((fkeys = (char **)calloc(capacity, sizeof(char *))) == NULL)
 	{
-		while((dir_entry = readdir(dp)) != NULL)
+		rc = PAHO_MEMORY_ERROR;
+		goto exit;
+	}
+
+	if ((dp = opendir(dirname)) != NULL)
+	{
+		while ((dir_entry = readdir(dp)) != NULL)
 		{
-			size_t allocsize = strlen(dirname)+strlen(dir_entry->d_name)+2;
-			char* temp = malloc(allocsize);
+			size_t allocsize = strlen(dirname) + strlen(dir_entry->d_name) + 2;
+			char *temp = malloc(allocsize);
 
 			if (!temp)
 			{
 				rc = PAHO_MEMORY_ERROR;
-				goto exit;
+				goto cleanup;
 			}
+
 			if (snprintf(temp, allocsize, "%s/%s", dirname, dir_entry->d_name) >= allocsize)
 			{
 				free(temp);
 				rc = MQTTCLIENT_PERSISTENCE_ERROR;
-				goto exit;
+				goto cleanup;
 			}
+
 			if (lstat(temp, &stat_info) == 0 && S_ISREG(stat_info.st_mode))
+			{
+				if (nfkeys >= capacity)
+				{
+					capacity *= 2;
+					char **new_fkeys = realloc(fkeys, capacity * sizeof(char *));
+					if (new_fkeys == NULL)
+					{
+						free(temp);
+						rc = PAHO_MEMORY_ERROR;
+						goto cleanup;
+					}
+					fkeys = new_fkeys;
+					for (int j = nfkeys; j < capacity; j++)
+						fkeys[j] = NULL;
+				}
+
+				if ((fkeys[nfkeys] = malloc(strlen(dir_entry->d_name) + 1)) == NULL)
+				{
+					free(temp);
+					rc = PAHO_MEMORY_ERROR;
+					goto cleanup;
+				}
+
+				strcpy(fkeys[nfkeys], dir_entry->d_name);
+				char *ptraux = strstr(fkeys[nfkeys], MESSAGE_FILENAME_EXTENSION);
+				if (ptraux != NULL)
+					*ptraux = '\0' ;
+
 				nfkeys++;
+			}
 			free(temp);
 		}
 		closedir(dp);
 		dp = NULL;
-	} else
+	}
+	else
 	{
 		rc = MQTTCLIENT_PERSISTENCE_ERROR;
 		goto exit;
 	}
 
-	if (nfkeys != 0)
-	{
-		if ((fkeys = (char **)calloc(nfkeys, sizeof(char *))) == NULL)
-		{
-			rc = PAHO_MEMORY_ERROR;
-			goto exit;
-		}
-
-		/* copy the keys */
-		if((dp = opendir(dirname)) != NULL)
-		{
-			i = 0;
-			while(((dir_entry = readdir(dp)) != NULL) && (i < nfkeys))
-			{
-				size_t allocsize = strlen(dirname)+strlen(dir_entry->d_name)+2;
-				char* temp = malloc(allocsize);
-
-				if (!temp)
-				{
-					int n = 0;
-					for (n = 0; n < i; n++)
-						free(fkeys[n]);
-					free(fkeys);
-					rc = PAHO_MEMORY_ERROR;
-					goto exit;
-				}
-				if (snprintf(temp, allocsize, "%s/%s", dirname, dir_entry->d_name) >= allocsize)
-				{
-					int n = 0;
-					for (n = 0; n < i; n++)
-						free(fkeys[n]);
-					free(temp);
-					free(fkeys);
-					rc = MQTTCLIENT_PERSISTENCE_ERROR;
-					goto exit;
-				}
-				if (lstat(temp, &stat_info) == 0 && S_ISREG(stat_info.st_mode))
-				{
-					if ((fkeys[i] = malloc(strlen(dir_entry->d_name) + 1)) == NULL)
-					{
-						int n = 0;
-						for (n = 0; n < i; n++)
-							free(fkeys[n]);
-						free(temp);
-						free(fkeys);
-						rc = PAHO_MEMORY_ERROR;
-						goto exit;
-					}
-					strcpy(fkeys[i], dir_entry->d_name);
-					ptraux = strstr(fkeys[i], MESSAGE_FILENAME_EXTENSION);
-					if ( ptraux != NULL )
-						*ptraux = '\0' ;
-					i++;
-				}
-				free(temp);
-			}
-		} else
-		{
-			rc = MQTTCLIENT_PERSISTENCE_ERROR;
-			goto exit;
-		}
-	}
-
-	*nkeys = i;
+	*nkeys = nfkeys;
 	*keys = fkeys;
-	/* the caller must free keys */
+	FUNC_EXIT_RC(rc);
+	return rc;
+
+cleanup:
+	if (fkeys != NULL)
+	{
+		for (int n = 0; n < nfkeys; n++)
+			if (fkeys[n] != NULL) free(fkeys[n]);
+		free(fkeys);
+	}
 
 exit:
 	if (dp)
