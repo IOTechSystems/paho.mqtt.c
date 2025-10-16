@@ -778,7 +778,7 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 	int rc = 0;
 	char **fkeys = NULL;
 	int nfkeys = 0;
-	int capacity = 16;
+	int capacity = 1024;
 	DIR *dp = NULL;
 	struct dirent *dir_entry;
 	struct stat stat_info;
