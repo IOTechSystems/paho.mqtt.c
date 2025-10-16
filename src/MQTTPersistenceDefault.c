@@ -783,6 +783,7 @@ int keysUnix(char *dirname, char ***keys, int *nkeys)
 	struct dirent *dir_entry;
 	struct stat stat_info;
 
+	FUNC_ENTRY;
 	if ((fkeys = (char **)calloc(capacity, sizeof(char *))) == NULL)
 	{
 		rc = PAHO_MEMORY_ERROR;
