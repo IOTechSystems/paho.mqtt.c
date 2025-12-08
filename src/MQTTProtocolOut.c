@@ -222,19 +222,13 @@ int MQTTProtocol_connect(const char* ip_address, Clients* aClient, int websocket
 	int rc = 0,
 		port;
 	size_t addr_len;
-	char* p0;
 
 	FUNC_ENTRY;
 	aClient->good = 1;
 
 	if (aClient->httpProxy)
-		p0 = aClient->httpProxy;
-	else
-		p0 = getenv("http_proxy");
-
-	if (p0)
 	{
-		if ((rc = MQTTProtocol_setHTTPProxy(aClient, p0, &aClient->net.http_proxy, &aClient->net.http_proxy_auth, "http://")) != 0)
+		if ((rc = MQTTProtocol_setHTTPProxy(aClient, aClient->httpProxy, &aClient->net.http_proxy, &aClient->net.http_proxy_auth, "http://")) != 0)
 			goto exit;
 		Log(TRACE_PROTOCOL, -1, "Setting http proxy to %s", aClient->net.http_proxy);
 		if (aClient->net.http_proxy_auth)
@@ -242,14 +236,10 @@ int MQTTProtocol_connect(const char* ip_address, Clients* aClient, int websocket
 	}
 
 #if defined(OPENSSL)
-	if (aClient->httpsProxy)
-		p0 = aClient->httpsProxy;
-	else
-		p0 = getenv("https_proxy");
 
-	if (p0)
+	if (aClient->httpsProxy)
 	{
-		if ((rc = MQTTProtocol_setHTTPProxy(aClient, p0, &aClient->net.https_proxy, &aClient->net.https_proxy_auth, "https://")) != 0)
+		if ((rc = MQTTProtocol_setHTTPProxy(aClient, aClient->httpsProxy, &aClient->net.https_proxy, &aClient->net.https_proxy_auth, "https://")) != 0)
 			goto exit;
 		Log(TRACE_PROTOCOL, -1, "Setting https proxy to %s", aClient->net.https_proxy);
 		if (aClient->net.https_proxy_auth)
