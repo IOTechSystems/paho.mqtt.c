@@ -349,7 +349,7 @@ int MQTTAsync_createWithOptions(MQTTAsync* handle, const char* serverURI, const 
 	}
 
 	if (options && (strncmp(options->struct_id, "MQCO", 4) != 0 ||
-					options->struct_version < 0 || options->struct_version > 2))
+					options->struct_version < 0 || options->struct_version > 4))
 	{
 		rc = MQTTASYNC_BAD_STRUCTURE;
 		goto exit;
@@ -446,6 +446,8 @@ int MQTTAsync_createWithOptions(MQTTAsync* handle, const char* serverURI, const 
 		memcpy(m->createOptions, options, sizeof(MQTTAsync_createOptions));
 		if (options->struct_version > 0)
 			m->c->MQTTVersion = options->MQTTVersion;
+		if (options->struct_version >= 4)
+			m->c->tcpUserTimeoutMs = options->tcpUserTimeoutMs;
 	}
 
 #if !defined(NO_PERSISTENCE)
