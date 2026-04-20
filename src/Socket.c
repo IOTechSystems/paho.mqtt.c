@@ -490,7 +490,7 @@ SOCKET Socket_getReadySocket(int more_work, int timeout, mutex_type mutex, int* 
 {
 	SOCKET sock = 0;
 	*rc = 0;
-	int timeout_ms = 1000;
+	int timeout_ms = 200;
 
 	FUNC_ENTRY;
 	Paho_thread_lock_mutex(mutex);
@@ -1049,9 +1049,9 @@ exit:
  *  @return completion code 0=good, SOCKET_ERROR=fail
  */
 #if defined(__GNUC__) && defined(__linux__)
-int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* sock, long timeout)
+int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* sock, long timeout, unsigned int tcpUserTimeoutMs)
 #else
-int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* sock)
+int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* sock, unsigned int tcpUserTimeoutMs)
 #endif
 {
 	int type = SOCK_STREAM;
@@ -1167,6 +1167,14 @@ int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* sock)
 
 			if (setsockopt(*sock, SOL_SOCKET, SO_NOSIGPIPE, (void*)&opt, sizeof(opt)) != 0)
 				Log(LOG_ERROR, -1, "Could not set SO_NOSIGPIPE for socket %d", *sock);
+#endif
+
+#if defined(__GNUC__) && defined(__linux__)
+			if (tcpUserTimeoutMs > 0)
+			{
+				if (setsockopt(*sock, IPPROTO_TCP, TCP_USER_TIMEOUT, &tcpUserTimeoutMs, sizeof(tcpUserTimeoutMs)) != 0)
+					Log(LOG_ERROR, -1, "Could not set TCP_USER_TIMEOUT for socket %d", *sock);
+			}
 #endif
 /*#define SMALL_TCP_BUFFER_TESTING
   This section sets the TCP send buffer to a small amount to provoke TCPSOCKET_INTERRUPTED
