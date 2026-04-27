@@ -695,7 +695,7 @@ int MQTTAsync_connect(MQTTAsync handle, const MQTTAsync_connectOptions* options)
 	if (locked)
 		MQTTAsync_unlock_mutex(mqttasync_mutex);
 
-	m->c->keepAliveInterval = m->c->savedKeepAliveInterval = options->keepAliveInterval;
+	m->c->keepAliveInterval = options->keepAliveInterval;
 	setRetryLoopInterval(options->keepAliveInterval);
 	m->c->cleansession = options->cleansession;
 	m->c->maxInflightMessages = options->maxInflight;

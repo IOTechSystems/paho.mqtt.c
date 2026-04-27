@@ -2039,26 +2039,6 @@ static int MQTTAsync_completeConnection(MQTTAsyncs* m, Connack* connack)
 				if (m->c->connected != 1)
 					rc = MQTTASYNC_DISCONNECTED;
 			}
-			if (m->c->MQTTVersion == MQTTVERSION_5)
-			{
-				if (MQTTProperties_hasProperty(&connack->properties, MQTTPROPERTY_CODE_SERVER_KEEP_ALIVE))
-				{
-					/* update the keep alive from the server keep alive */
-					int server_keep_alive = (int)MQTTProperties_getNumericValue(&connack->properties, MQTTPROPERTY_CODE_SERVER_KEEP_ALIVE);
-					if (server_keep_alive != -999999)
-					{
-						Log(LOG_PROTOCOL, -1, "Setting keep alive interval to server keep alive %d", server_keep_alive);
-						m->c->keepAliveInterval = server_keep_alive;
-					}
-				}
-				else if (m->c->keepAliveInterval != m->c->savedKeepAliveInterval)
-				{
-					/* if the keep alive has been previously updated with a server keep alive, but there is no server keep alive
-					on this connect, reset it to the value requested in the original connect API */
-					Log(LOG_PROTOCOL, -1, "Resetting keep alive interval to %d", m->c->savedKeepAliveInterval);
-					m->c->keepAliveInterval = m->c->savedKeepAliveInterval;
-				}
-			}
 		}
 		m->pack = NULL;
 		Thread_signal_evt(send_evt);
