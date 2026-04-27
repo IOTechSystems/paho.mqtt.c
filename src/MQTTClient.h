@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2023 IBM Corp., Ian Craggs and others
+ * Copyright (c) 2009, 2026 IBM Corp., Ian Craggs and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -41,9 +41,11 @@
  * @endcond
  * @cond MQTTClient_main
  * @mainpage MQTT Client library for C (MQTTClient)
- * &copy; Copyright 2009, 2023 IBM Corp., Ian Craggs and others
+ * &copy; Copyright 2009, 2026 IBM Corp., Ian Craggs and others
  *
  * @brief An MQTT client library in C.
+ *
+ * Version 1.3.16
  *
  * These pages describe the original more synchronous API which might be
  * considered easier to use.  Some of the calls will block.  For the new
@@ -97,6 +99,7 @@
  * <li>@ref wildcard</li>
  * <li>@ref qos</li>
  * <li>@ref tracing</li>
+ * <li>@ref HTTP_proxies</li>
  * </ul>
  * @endcond
  */
@@ -123,6 +126,8 @@
 #include "MQTTSubscribeOpts.h"
 #if !defined(NO_PERSISTENCE)
 #include "MQTTClientPersistence.h"
+#else
+#define MQTTCLIENT_PERSISTENCE_NONE 1
 #endif
 
 /**
@@ -181,10 +186,10 @@
 /**
  * Return code: protocol prefix in serverURI should be:
  * @li @em tcp:// or @em mqtt:// - Insecure TCP
- * @li @em ssl:// or @em mqtts:// - Encrypted SSL/TLS
+ * @li @em ssl:// or @em tls:// or @em mqtts:// - Encrypted SSL/TLS
  * @li @em ws:// - Insecure websockets
  * @li @em wss:// - Secure web sockets
- * The TLS enabled prefixes (ssl, mqtts, wss) are only valid if a TLS
+ * The TLS enabled prefixes (ssl, tls, mqtts, wss) are only valid if a TLS
  * version of the library is linked with.
  */
 #define MQTTCLIENT_BAD_PROTOCOL -14
@@ -405,7 +410,8 @@ typedef void MQTTClient_connectionLost(void* context, char* cause);
 /**
  * This function sets the callback functions for a specific client.
  * If your client application doesn't use a particular callback, set the
- * relevant parameter to NULL. Calling MQTTClient_setCallbacks() puts the
+ * relevant parameter to NULL (except for message arrived, which must be given).
+ * Calling MQTTClient_setCallbacks() puts the
  * client into multi-threaded mode. Any necessary message acknowledgements and
  * status communications are handled in the background without any intervention
  * from the client application. See @ref async for more information.
@@ -502,13 +508,13 @@ LIBMQTT_API int MQTTClient_setPublished(MQTTClient handle, void* context, MQTTCl
  * <br>
  * @em tcp:// or @em mqtt:// - Insecure TCP
  * <br>
- * @em ssl:// or @em mqtts:// - Encrypted SSL/TLS
+ * @em ssl:// or @em tls:// or @em mqtts:// - Encrypted SSL/TLS
  * <br>
  * @em ws:// - Insecure websockets
  * <br>
  * @em wss:// - Secure web sockets
  * <br>
- * The TLS enabled prefixes (ssl, mqtts, wss) are only valid if a TLS
+ * The TLS enabled prefixes (ssl, tls, mqtts, wss) are only valid if a TLS
  * version of the library is linked with.
  * For <i>host</i>, you can specify either an IP address or a host name. For
  * instance, to connect to a server running on the local machines with the
@@ -921,7 +927,7 @@ typedef struct
    * An optional array of null-terminated strings specifying the servers to
    * which the client will connect. Each string takes the form <i>protocol://host:port</i>.
    * <i>protocol</i> must be <i>tcp</i>, <i>ssl</i>, <i>ws</i> or <i>wss</i>.
-   * The TLS enabled prefixes (ssl, wss) are only valid if a TLS version of the library
+   * The TLS enabled prefixes (ssl, tls, wss) are only valid if a TLS version of the library
    * is linked with.
    * For <i>host</i>, you can
    * specify either an IP address or a host name. For instance, to connect to
@@ -969,12 +975,14 @@ typedef struct
 	 */
 	const MQTTClient_nameValue* httpHeaders;
 	/**
-	 * HTTP proxy
-	 */
+	* The string value of the HTTP proxy. Examples:
+	*  - http://your.proxy.server:8080/
+	*  - http://user:pass@my.proxy.server:8080/
+	*/
 	const char* httpProxy;
 	/**
-	 * HTTPS proxy
-	 */
+	* HTTPS proxy setting. See ::MQTTClient_connectOptions.httpProxy and the section @ref HTTP_proxies.
+	*/
 	const char* httpsProxy;
 } MQTTClient_connectOptions;
 
@@ -1520,7 +1528,7 @@ LIBMQTT_API const char* MQTTClient_strerror(int code);
   * This server behaviour is allowed in MQTT 5.0, but not in MQTT 3.1.1, so the
   * disconnected callback will never be invoked if you use MQTT 3.1.1.
   *
-  * In particular, you must make a publish call within the message arrived callback.
+  * In particular, you must not make a publish call within the message arrived callback.
   * These restrictions are all lifted in the
   * <a href="../../MQTTAsync/html/index.html">MQTTAsync API</a>.
   *
@@ -1616,7 +1624,7 @@ LIBMQTT_API const char* MQTTClient_strerror(int code);
 #include <string.h>
 #include "MQTTClient.h"
 
-#define ADDRESS     "tcp://mqtt.eclipseprojects.io:1883"
+#define ADDRESS     "tcp://test.mosquitto.org:1883"
 #define CLIENTID    "ExampleClientPub"
 #define TOPIC       "MQTT Examples"
 #define PAYLOAD     "Hello World!"
@@ -1683,7 +1691,7 @@ int main(int argc, char* argv[])
 #include <windows.h>
 #endif
 
-#define ADDRESS     "tcp://mqtt.eclipseprojects.io:1883"
+#define ADDRESS     "tcp://test.mosquitto.org:1883"
 #define CLIENTID    "ExampleClientPub"
 #define TOPIC       "MQTT Examples"
 #define PAYLOAD     "Hello World!"
@@ -1792,7 +1800,7 @@ exit:
 #include <string.h>
 #include "MQTTClient.h"
 
-#define ADDRESS     "tcp://mqtt.eclipseprojects.io:1883"
+#define ADDRESS     "tcp://test.mosquitto.org:1883"
 #define CLIENTID    "ExampleClientSub"
 #define TOPIC       "MQTT Examples"
 #define PAYLOAD     "Hello World!"
@@ -1977,4 +1985,20 @@ exit:
     20130528 163909.209 Heap scan end
   * @endcode
   * @endcond
+  *
+* √* @page HTTP_proxies HTTP Proxies
+  * The use of HTTP proxies can be controlled by environment variables or API calls.
+  *
+  * The ::MQTTClient_connectOptions.httpProxy and ::MQTTClient_connectOptions.httpsProxy fields
+  * of the ::MQTTClient_connectOptions structure override any settings in the environment.
+  *
+  * If the environment variable PAHO_C_CLIENT_USE_HTTP_PROXY is set to TRUE, then the
+  * http_proxy or https_proxy (lower case only) environment variables are used, for plain
+  * TCP and TLS-secured connections respectively.
+  *
+  * The no_proxy environment variable can be used to exclude certain hosts from using an
+  * environment variable chosen proxy. This does not apply to a proxy selected through the API.
+  * The no_proxy environment variable is lower case only, and is a list of comma-separated
+  * hostname:port values. Suffixes are matched (e.g. example.com will match test.example.com).
+  *
   */

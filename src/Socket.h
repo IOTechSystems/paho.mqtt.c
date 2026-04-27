@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2022 IBM Corp., Ian Craggs and others
+ * Copyright (c) 2009, 2026 IBM Corp., Ian Craggs and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 #include <errno.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -61,6 +61,9 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#ifdef __QNXNTO__
+#define AI_ADDRCONFIG 0
+#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -70,7 +73,7 @@
 #define SOCKET int
 #endif
 
-#include "mutex_type.h" /* Needed for mutex_type */
+#include "Thread.h" /* Needed for mutex_type */
 
 /** socket operation completed successfully */
 #define TCPSOCKET_COMPLETE 0
@@ -138,7 +141,7 @@ typedef struct
 
 void Socket_outInitialize(void);
 void Socket_outTerminate(void);
-SOCKET Socket_getReadySocket(int more_work, int timeout, mutex_type mutex, int* rc);
+SOCKET Socket_getReadySocket(int more_work, int timeout, mutex_type mutex, int* rc, int* interrupted);
 int Socket_getch(SOCKET socket, char* c);
 char *Socket_getdata(SOCKET socket, size_t bytes, size_t* actual_len, int* rc);
 int Socket_putdatas(SOCKET socket, char* buf0, size_t buf0len, PacketBuffers bufs);
@@ -149,6 +152,7 @@ int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* socket, long
 #else
 int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* socket, unsigned int tcpUserTimeoutMs);
 #endif
+int Socket_unix_new(const char* addr, size_t addr_len, SOCKET* sock);
 
 int Socket_noPendingWrites(SOCKET socket);
 char* Socket_getpeer(SOCKET sock);
@@ -164,5 +168,7 @@ void Socket_setWriteCompleteCallback(Socket_writeComplete*);
 
 typedef void Socket_writeAvailable(SOCKET socket);
 void Socket_setWriteAvailableCallback(Socket_writeAvailable*);
+
+int Socket_interrupt();
 
 #endif /* SOCKET_H */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2022 IBM Corp. and Ian Craggs
+ * Copyright (c) 2009, 2026 IBM Corp. and Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -331,8 +331,17 @@ int MQTTProtocol_handlePublishes(void* pack, SOCKET sock)
 	FUNC_ENTRY;
 	client = (Clients*)(ListFindItem(bstate->clients, &sock, clientSocketCompare)->content);
 	clientid = client->clientID;
-	Log(LOG_PROTOCOL, 11, NULL, sock, clientid, publish->msgId, publish->header.bits.qos,
-					publish->header.bits.retain, publish->payloadlen, min(20, publish->payloadlen), publish->payload);
+
+	/* Format and print publish data to trace */
+	{
+		#define buflen 30
+		char buf[buflen];
+		int len = 0;
+
+		len = MQTTPacket_formatPayload(buflen, buf, publish->payloadlen, publish->payload);
+		Log(LOG_PROTOCOL, 11, NULL, sock, clientid, publish->msgId, publish->header.bits.qos,
+						publish->header.bits.retain, publish->payloadlen, len, buf);
+	}
 
 	if (publish->header.bits.qos == 0)
 	{
@@ -450,7 +459,10 @@ int MQTTProtocol_handlePubacks(void* pack, SOCKET sock, Publications** pubToRemo
 	{
 		Messages* m = (Messages*)(client->outboundMsgs->current->content);
 		if (m->qos != 1)
-			Log(TRACE_MIN, 4, NULL, "PUBACK", client->clientID, puback->msgId, m->qos);
+		{
+			Log(LOG_ERROR, 4, NULL, "PUBACK", client->clientID, puback->msgId, m->qos);
+			rc = SOCKET_ERROR;
+		}
 		else
 		{
 			Log(TRACE_MIN, 6, NULL, "PUBACK", client->clientID, puback->msgId);

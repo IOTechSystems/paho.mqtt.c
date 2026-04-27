@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp.
+ * Copyright (c) 2009, 2024 IBM Corp.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -159,7 +159,7 @@ void MyLog(int LOGA_level, char* format, ...)
 
 void MySleep(long milliseconds)
 {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 	Sleep(milliseconds);
 #else
 	usleep(milliseconds*1000);
@@ -1013,7 +1013,7 @@ void test4_onConnect(void* context, MQTTAsync_successData5* response)
 	MQTTAsync_callOptions opts = MQTTAsync_callOptions_initializer;
 	int rc;
 
-	test4_packet_size = MQTTProperties_getNumericValue(&response->properties, MQTTPROPERTY_CODE_MAXIMUM_PACKET_SIZE);
+	test4_packet_size = (int)MQTTProperties_getNumericValue(&response->properties, MQTTPROPERTY_CODE_MAXIMUM_PACKET_SIZE);
 
 	MyLog(LOGA_DEBUG, "In connect onSuccess callback, context %p", context);
 	opts.onSuccess5 = test4_onSubscribe;
@@ -2045,7 +2045,7 @@ void trace_callback(enum MQTTASYNC_TRACE_LEVELS level, char* message)
 int main(int argc, char** argv)
 {
 	int rc = -1;
- 	int (*tests[])(struct Options options) = {NULL, test1, test2, test3, test4, test5, test6, test7, test8}; /* indexed starting from 1 */
+ 	int (*tests[])(struct Options) = {NULL, test1, test2, test3, test4, test5, test6, test7, test8}; /* indexed starting from 1 */
 	MQTTAsync_nameValue* info;
 	int i;
 

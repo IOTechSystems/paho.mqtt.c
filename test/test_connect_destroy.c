@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2023 IBM Corp. and others
+ * Copyright (c) 2009, 2026 IBM Corp. and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -176,14 +176,14 @@ void MyLog(int LOGA_level, char* format, ...)
 
 void MySleep(long milliseconds)
 {
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 	Sleep(milliseconds);
 #else
 	usleep(milliseconds*1000);
 #endif
 }
 
-#if defined(WIN32) || defined(_WINDOWS)
+#if defined(_WIN32) || defined(_WINDOWS)
 #define START_TIME_TYPE DWORD
 static DWORD start_time = 0;
 START_TIME_TYPE start_clock(void)
@@ -210,7 +210,7 @@ START_TIME_TYPE start_clock(void)
 #endif
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
 long elapsed(START_TIME_TYPE start_time)
 {
 	return GetTickCount() - start_time;
@@ -382,14 +382,14 @@ exit:
 int main(int argc, char** argv)
 {
 	int rc = 0;
-	int (*tests[])(struct Options options) = {NULL, test1};
+	int (*tests[])(struct Options) = {NULL, test1};
 	int i;
 
 	xml = fopen("TEST-test2.xml", "w");
 	fprintf(xml, "<testsuite name=\"test1\" tests=\"%d\">\n", (int)(ARRAY_SIZE(tests) - 1));
 
 	setenv("MQTT_C_CLIENT_TRACE", "ON", 1);
-	setenv("MQTT_C_CLIENT_TRACE_LEVEL", "ERROR", 0);
+	setenv("MQTT_C_CLIENT_TRACE_LEVEL", "ERROR", 1);
 
 	getopts(argc, argv);
 

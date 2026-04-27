@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "MQTTTime.h"
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 #include <winsock2.h>
 #endif
 #if defined(OPENSSL)

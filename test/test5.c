@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2022 IBM Corp., Ian Craggs
+ * Copyright (c) 2012, 2024 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -2697,7 +2697,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
-	int (*tests[])(struct Options options) =
+	int (*tests[])(struct Options) =
             { NULL, test1, test2a, test2b, test2c, test2d, test3a, test3b, test4, /* test5a,
 			test5b, test5c, */ test6, test7, test8, test9, test10, test2e };
 

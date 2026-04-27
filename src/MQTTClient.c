@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2023 IBM Corp., Ian Craggs and others
+ * Copyright (c) 2009, 2026 IBM Corp., Ian Craggs and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -46,7 +46,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 	#include <sys/time.h>
 #else
 	#if defined(_MSC_VER) && _MSC_VER < 1900
@@ -71,6 +71,7 @@
 #include <openssl/ssl.h>
 #else
 #define URI_SSL   "ssl://"
+#define URI_TLS   "tls://"
 #define URI_MQTTS "mqtts://"
 #endif
 
@@ -80,6 +81,7 @@
 #define URI_MQTT "mqtt://"
 #define URI_WS   "ws://"
 #define URI_WSS  "wss://"
+#define URI_UNIX "unix://"
 
 #include "VersionInfo.h"
 #include "WebSocket.h"
@@ -89,7 +91,7 @@ const char *client_timestamp_eye = "MQTTClientV3_Timestamp " BUILD_TIMESTAMP;
 const char *client_version_eye = "MQTTClientV3_Version " CLIENT_VERSION;
 
 struct conlost_sync_data {
-	sem_type sem;
+	evt_type evt;
 	void *m;
 };
 
@@ -113,7 +115,7 @@ ClientStates* bstate = &ClientState;
 
 MQTTProtocol state;
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 static mutex_type mqttclient_mutex = NULL;
 mutex_type socket_mutex = NULL;
 static mutex_type subscribe_mutex = NULL;
@@ -126,51 +128,51 @@ extern mutex_type log_mutex;
 
 int MQTTClient_init(void)
 {
-	DWORD rc = 0;
+	int rc = 0;
 
 	if (mqttclient_mutex == NULL)
 	{
-		if ((mqttclient_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		mqttclient_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("mqttclient_mutex error %d\n", rc);
 			goto exit;
 		}
-		if ((subscribe_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		subscribe_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("subscribe_mutex error %d\n", rc);
 			goto exit;
 		}
-		if ((connect_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		connect_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("connect_mutex error %d\n", rc);
 			goto exit;
 		}
 #if !defined(NO_HEAP_TRACKING)
-		if ((stack_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		stack_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("stack_mutex error %d\n", rc);
 			goto exit;
 		}
-		if ((heap_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		heap_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("heap_mutex error %d\n", rc);
 			goto exit;
 		}
 #endif
-		if ((log_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		log_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("log_mutex error %d\n", rc);
 			goto exit;
 		}
-		if ((socket_mutex = CreateMutex(NULL, 0, NULL)) == NULL)
+		socket_mutex = Paho_thread_create_mutex(&rc);
+		if (rc != 0)
 		{
-			rc = GetLastError();
 			printf("socket_mutex error %d\n", rc);
 			goto exit;
 		}
@@ -182,21 +184,21 @@ exit:
 void MQTTClient_cleanup(void)
 {
 	if (connect_mutex)
-		CloseHandle(connect_mutex);
+		Paho_thread_destroy_mutex(connect_mutex);
 	if (subscribe_mutex)
-		CloseHandle(subscribe_mutex);
+		Paho_thread_destroy_mutex(subscribe_mutex);
 #if !defined(NO_HEAP_TRACKING)
 	if (stack_mutex)
-		CloseHandle(stack_mutex);
+		Paho_thread_destroy_mutex(stack_mutex);
 	if (heap_mutex)
-		CloseHandle(heap_mutex);
+		Paho_thread_destroy_mutex(heap_mutex);
 #endif
 	if (log_mutex)
-		CloseHandle(log_mutex);
+		Paho_thread_destroy_mutex(log_mutex);
 	if (socket_mutex)
-		CloseHandle(socket_mutex);
+		Paho_thread_destroy_mutex(socket_mutex);
 	if (mqttclient_mutex)
-		CloseHandle(mqttclient_mutex);
+		Paho_thread_destroy_mutex(mqttclient_mutex);
 }
 
 #if defined(PAHO_MQTT_STATIC)
@@ -294,6 +296,7 @@ typedef struct
 {
 	char* serverURI;
 	const char* currentServerURI; /* when using HA options, set the currently used serverURI */
+	int unixsock;
 #if defined(OPENSSL)
 	int ssl;
 #endif
@@ -315,11 +318,11 @@ typedef struct
 	void* auth_handle_context; /* the context to be associated with the authHandle callback*/
 #endif
 
-	sem_type connect_sem;
 	int rc; /* getsockopt return code in connect */
-	sem_type connack_sem;
-	sem_type suback_sem;
-	sem_type unsuback_sem;
+	evt_type connect_evt;
+	evt_type connack_evt;
+	evt_type suback_evt;
+	evt_type unsuback_evt;
 	MQTTPacket* pack;
 
 	unsigned long commandTimeout;
@@ -368,7 +371,7 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 	int rc = 0;
 	MQTTClients *m = NULL;
 
-#if (defined(_WIN32) || defined(_WIN64)) && defined(PAHO_MQTT_STATIC)
+#if (defined(_WIN32)) && defined(PAHO_MQTT_STATIC)
 	/* intializes mutexes once.  Must come before FUNC_ENTRY */
 	BOOL bStatus = InitOnceExecuteOnce(&g_InitOnce, InitOnceFunction, NULL, NULL);
 #endif
@@ -401,8 +404,12 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 		 && strncmp(URI_WS, serverURI, strlen(URI_WS)) != 0
 #if defined(OPENSSL)
          && strncmp(URI_SSL, serverURI, strlen(URI_SSL)) != 0
+		 && strncmp(URI_TLS, serverURI, strlen(URI_TLS)) != 0
          && strncmp(URI_MQTTS, serverURI, strlen(URI_MQTTS)) != 0
 		 && strncmp(URI_WSS, serverURI, strlen(URI_WSS)) != 0
+#endif
+#if defined(UNIXSOCK)
+		 && strncmp(URI_UNIX, serverURI, strlen(URI_UNIX)) != 0
 #endif
 			)
 		{
@@ -462,6 +469,16 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 		goto exit;
 #endif
 	}
+	else if (strncmp(URI_TLS, serverURI, strlen(URI_TLS)) == 0)
+	{
+#if defined(OPENSSL)
+		serverURI += strlen(URI_TLS);
+		m->ssl = 1;
+#else
+		rc = MQTTCLIENT_SSL_NOT_SUPPORTED;
+		goto exit;
+#endif
+	}
 	else if (strncmp(URI_MQTTS, serverURI, strlen(URI_MQTTS)) == 0)
 	{
 #if defined(OPENSSL)
@@ -483,6 +500,13 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 		goto exit;
 #endif
 	}
+#if defined(UNIXSOCK)
+	else if (strncmp(URI_UNIX, serverURI, strlen(URI_UNIX)) == 0)
+	{
+		serverURI += strlen(URI_UNIX);
+		m->unixsock = 1;
+	}
+#endif
 	m->serverURI = MQTTStrdup(serverURI);
 	ListAppend(handles, m, sizeof(MQTTClients));
 
@@ -500,10 +524,11 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 	m->c->messageQueue = ListInitialize();
 	m->c->outboundQueue = ListInitialize();
 	m->c->clientID = MQTTStrdup(clientId);
-	m->connect_sem = Thread_create_sem(&rc);
-	m->connack_sem = Thread_create_sem(&rc);
-	m->suback_sem = Thread_create_sem(&rc);
-	m->unsuback_sem = Thread_create_sem(&rc);
+	// TODO (fmp): None of these events are being checked for failure
+	m->connect_evt = Thread_create_evt(&rc);
+	m->connack_evt = Thread_create_evt(&rc);
+	m->suback_evt = Thread_create_evt(&rc);
+	m->unsuback_evt = Thread_create_evt(&rc);
 
 #if !defined(NO_PERSISTENCE)
 	rc = MQTTPersistence_create(&(m->c->persistence), persistence_type, persistence_context);
@@ -601,10 +626,10 @@ void MQTTClient_destroy(MQTTClient* handle)
 	}
 	if (m->serverURI)
 		free(m->serverURI);
-	Thread_destroy_sem(m->connect_sem);
-	Thread_destroy_sem(m->connack_sem);
-	Thread_destroy_sem(m->suback_sem);
-	Thread_destroy_sem(m->unsuback_sem);
+	Thread_destroy_evt(m->connect_evt);
+	Thread_destroy_evt(m->connack_evt);
+	Thread_destroy_evt(m->suback_evt);
+	Thread_destroy_evt(m->unsuback_evt);
 	if (!ListRemove(handles, m))
 		Log(LOG_ERROR, -1, "free error");
 	*handle = NULL;
@@ -710,7 +735,7 @@ static thread_return_type WINAPI connectionLost_call(void* context)
 
 	(*(m->cl))(m->context, NULL);
 
-	Thread_post_sem(data->sem);
+	Thread_signal_evt(data->evt);
 	return 0;
 }
 
@@ -865,15 +890,15 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 			{
 				if (m->c->connect_state == SSL_IN_PROGRESS)
 				{
-					Log(TRACE_MIN, -1, "Posting connect semaphore for client %s", m->c->clientID);
+					Log(TRACE_MIN, -1, "Signaling connect event for client %s", m->c->clientID);
 					m->c->connect_state = NOT_IN_PROGRESS;
-					Thread_post_sem(m->connect_sem);
+					Thread_signal_evt(m->connect_evt);
 				}
 				if (m->c->connect_state == WAIT_FOR_CONNACK)
 				{
-					Log(TRACE_MIN, -1, "Posting connack semaphore for client %s", m->c->clientID);
+					Log(TRACE_MIN, -1, "Signaling connack event for client %s", m->c->clientID);
 					m->c->connect_state = NOT_IN_PROGRESS;
-					Thread_post_sem(m->connack_sem);
+					Thread_signal_evt(m->connack_evt);
 				}
 			}
 		}
@@ -912,21 +937,21 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 			{
 				if (pack->header.bits.type == CONNACK)
 				{
-					Log(TRACE_MIN, -1, "Posting connack semaphore for client %s", m->c->clientID);
+					Log(TRACE_MIN, -1, "Signaling connack event for client %s", m->c->clientID);
 					m->pack = pack;
-					Thread_post_sem(m->connack_sem);
+					Thread_signal_evt(m->connack_evt);
 				}
 				else if (pack->header.bits.type == SUBACK)
 				{
-					Log(TRACE_MIN, -1, "Posting suback semaphore for client %s", m->c->clientID);
+					Log(TRACE_MIN, -1, "Signaling suback event for client %s", m->c->clientID);
 					m->pack = pack;
-					Thread_post_sem(m->suback_sem);
+					Thread_signal_evt(m->suback_evt);
 				}
 				else if (pack->header.bits.type == UNSUBACK)
 				{
-					Log(TRACE_MIN, -1, "Posting unsuback semaphore for client %s", m->c->clientID);
+					Log(TRACE_MIN, -1, "Signaling unsuback event for client %s", m->c->clientID);
 					m->pack = pack;
-					Thread_post_sem(m->unsuback_sem);
+					Thread_signal_evt(m->unsuback_evt);
 				}
 				else if (m->c->MQTTVersion >= MQTTVERSION_5)
 				{
@@ -976,9 +1001,9 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 
 				if ((m->rc = getsockopt(m->c->net.socket, SOL_SOCKET, SO_ERROR, (char*)&error, &len)) == 0)
 					m->rc = error;
-				Log(TRACE_MIN, -1, "Posting connect semaphore for client %s rc %d", m->c->clientID, m->rc);
+				Log(TRACE_MIN, -1, "Signaling connect event for client %s rc %d", m->c->clientID, m->rc);
 				m->c->connect_state = NOT_IN_PROGRESS;
-				Thread_post_sem(m->connect_sem);
+				Thread_signal_evt(m->connect_evt);
 			}
 #if defined(OPENSSL)
 			else if (m->c->connect_state == SSL_IN_PROGRESS)
@@ -993,9 +1018,9 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 					if (rc == 1 && (m->c->cleansession == 0 && m->c->cleanstart == 0) && m->c->session == NULL)
 						m->c->session = SSL_get1_session(m->c->net.ssl);
 					m->rc = rc;
-					Log(TRACE_MIN, -1, "Posting connect semaphore for SSL client %s rc %d", m->c->clientID, m->rc);
+					Log(TRACE_MIN, -1, "Signaling connect event for SSL client %s rc %d", m->c->clientID, m->rc);
 					m->c->connect_state = NOT_IN_PROGRESS;
-					Thread_post_sem(m->connect_sem);
+					Thread_signal_evt(m->connect_evt);
 				}
 			}
 #endif
@@ -1003,9 +1028,9 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 			{
 				if (rc != TCPSOCKET_INTERRUPTED)
 				{
-					Log(TRACE_MIN, -1, "Posting websocket handshake for client %s rc %d", m->c->clientID, m->rc);
+					Log(TRACE_MIN, -1, "Signaling websocket handshake for client %s rc %d", m->c->clientID, m->rc);
 					m->c->connect_state = WAIT_FOR_CONNACK;
-					Thread_post_sem(m->connect_sem);
+					Thread_signal_evt(m->connect_evt);
 				}
 			}
 		}
@@ -1014,7 +1039,7 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 	running = tostop = 0;
 	Paho_thread_unlock_mutex(mqttclient_mutex);
 	FUNC_EXIT;
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 	ExitThread(0);
 #endif
 	return 0;
@@ -1235,17 +1260,17 @@ static MQTTResponse MQTTClient_connectURIVersion(MQTTClient handle, MQTTClient_c
 	Log(TRACE_MIN, -1, "Connecting to serverURI %s with MQTT version %d", serverURI, MQTTVersion);
 #if defined(OPENSSL)
 #if defined(__GNUC__) && defined(__linux__)
-	rc = MQTTProtocol_connect(serverURI, m->c, m->ssl, m->websocket, MQTTVersion, connectProperties, willProperties,
+	rc = MQTTProtocol_connect(serverURI, m->c, m->unixsock, m->ssl, m->websocket, MQTTVersion, connectProperties, willProperties,
 			millisecsTimeout - MQTTTime_elapsed(start));
 #else
-	rc = MQTTProtocol_connect(serverURI, m->c, m->ssl, m->websocket, MQTTVersion, connectProperties, willProperties);
+	rc = MQTTProtocol_connect(serverURI, m->c, m->unixsock, m->ssl, m->websocket, MQTTVersion, connectProperties, willProperties);
 #endif
 #else
 #if defined(__GNUC__) && defined(__linux__)
-	rc = MQTTProtocol_connect(serverURI, m->c, m->websocket, MQTTVersion, connectProperties, willProperties,
+	rc = MQTTProtocol_connect(serverURI, m->c, m->unixsock, m->websocket, MQTTVersion, connectProperties, willProperties,
 			millisecsTimeout - MQTTTime_elapsed(start));
 #else
-	rc = MQTTProtocol_connect(serverURI, m->c, m->websocket, MQTTVersion, connectProperties, willProperties);
+	rc = MQTTProtocol_connect(serverURI, m->c, m->unixsock, m->websocket, MQTTVersion, connectProperties, willProperties);
 #endif
 #endif
 	if (rc == SOCKET_ERROR)
@@ -1285,7 +1310,7 @@ static MQTTResponse MQTTClient_connectURIVersion(MQTTClient handle, MQTTClient_c
 			setSocketForSSLrc = SSLSocket_setSocketForSSL(&m->c->net, m->c->sslopts,
 				serverURI, hostname_len);
 
-			if (setSocketForSSLrc != MQTTCLIENT_SUCCESS)
+			if (setSocketForSSLrc == 1)
 			{
 				if (m->c->session != NULL)
 					if ((rc = SSL_set_session(m->c->net.ssl, m->c->session)) != 1)
@@ -1439,8 +1464,8 @@ static MQTTResponse MQTTClient_connectURIVersion(MQTTClient handle, MQTTClient_c
 
 					while (ListNextElement(m->c->outboundMsgs, &outcurrent))
 					{
-						Messages* m = (Messages*)(outcurrent->content);
-						memset(&m->lastTouch, '\0', sizeof(m->lastTouch));
+						Messages* m2 = (Messages*)(outcurrent->content);
+						memset(&m2->lastTouch, '\0', sizeof(m2->lastTouch));
 					}
 					MQTTProtocol_retry(zero, 1, 1);
 					if (m->c->connected != 1)
@@ -1868,6 +1893,11 @@ MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions*
 				serverURI += strlen(URI_SSL);
 				m->ssl = 1;
 			}
+			else if (strncmp(URI_TLS, serverURI, strlen(URI_TLS)) == 0)
+			{
+				serverURI += strlen(URI_TLS);
+				m->ssl = 1;
+			}
 			else if (strncmp(URI_MQTTS, serverURI, strlen(URI_MQTTS)) == 0)
 			{
 				serverURI += strlen(URI_MQTTS);
@@ -1880,6 +1910,13 @@ MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions*
 				m->websocket = 1;
 			}
 #endif
+#if defined(UNIXSOCK)
+			else if (strncmp(URI_UNIX, serverURI, strlen(URI_UNIX)) == 0)
+			{
+				serverURI += strlen(URI_UNIX);
+				m->unixsock = 1;
+			}
+#endif
 			rc = MQTTClient_connectURI(handle, options, serverURI, connectProperties, willProperties);
 			if (rc.reasonCode == MQTTREASONCODE_SUCCESS)
 				break;
@@ -1889,7 +1926,7 @@ MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions*
 	{
 		if (rc.properties && MQTTProperties_hasProperty(rc.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM))
 		{
-			int recv_max = MQTTProperties_getNumericValue(rc.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
+			int recv_max = (int)MQTTProperties_getNumericValue(rc.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
 			if (m->c->maxInflightMessages > recv_max)
 				m->c->maxInflightMessages = recv_max;
 		}
@@ -1954,11 +1991,11 @@ exit:
 		MQTTClient_stop();
 	if (call_connection_lost && m->cl && was_connected)
 	{
-		sync.sem = Thread_create_sem(&rc);
+		sync.evt = Thread_create_evt(&rc);
 		Log(TRACE_MIN, -1, "Calling connectionLost for client %s", m->c->clientID);
 		Paho_thread_start(connectionLost_call, &sync);
-		Thread_wait_sem(sync.sem, 5000);
-		Thread_destroy_sem(sync.sem);
+		Thread_wait_evt(sync.evt, 5000);
+		Thread_destroy_evt(sync.evt);
 	}
 	FUNC_EXIT_RC(rc);
 	return rc;
@@ -2561,6 +2598,7 @@ static MQTTPacket* MQTTClient_cycle(SOCKET* sock, ELAPSED_TIME_TYPE timeout, int
 	static Ack ack;
 	MQTTPacket* pack = NULL;
 	int rc1 = 0;
+	int interrupted = 0;
 	START_TIME_TYPE start;
 
 	FUNC_ENTRY;
@@ -2570,7 +2608,7 @@ static MQTTPacket* MQTTClient_cycle(SOCKET* sock, ELAPSED_TIME_TYPE timeout, int
 		/* 0 from getReadySocket indicates no work to do, rc -1 == error */
 #endif
 		start = MQTTTime_start_clock();
-		*sock = Socket_getReadySocket(0, (int)timeout, socket_mutex, rc);
+		*sock = Socket_getReadySocket(0, (int)timeout, socket_mutex, rc, &interrupted);
 		*rc = rc1;
 		if (*sock == 0 && timeout >= 100L && MQTTTime_elapsed(start) < (int64_t)10)
 			MQTTTime_sleep(100L);
@@ -2674,15 +2712,15 @@ static MQTTPacket* MQTTClient_waitfor(MQTTClient handle, int packet_type, int* r
 	{
 		if (packet_type == CONNECT)
 		{
-			if ((*rc = Thread_wait_sem(m->connect_sem, (int)timeout)) == 0)
+			if ((*rc = Thread_wait_evt(m->connect_evt, (int)timeout)) == 0)
 				*rc = m->rc;
 		}
 		else if (packet_type == CONNACK)
-			*rc = Thread_wait_sem(m->connack_sem, (int)timeout);
+			*rc = Thread_wait_evt(m->connack_evt, (int)timeout);
 		else if (packet_type == SUBACK)
-			*rc = Thread_wait_sem(m->suback_sem, (int)timeout);
+			*rc = Thread_wait_evt(m->suback_evt, (int)timeout);
 		else if (packet_type == UNSUBACK)
-			*rc = Thread_wait_sem(m->unsuback_sem, (int)timeout);
+			*rc = Thread_wait_evt(m->unsuback_evt, (int)timeout);
 		if (*rc == 0 && packet_type != CONNECT && m->pack == NULL)
 			Log(LOG_ERROR, -1, "waitfor unexpectedly is NULL for client %s, packet_type %d, timeout %ld", m->c->clientID, packet_type, timeout);
 		pack = m->pack;
@@ -2933,8 +2971,8 @@ int MQTTClient_getPendingDeliveryTokens(MQTTClient handle, MQTTClient_deliveryTo
 		}
 		while (ListNextElement(m->c->outboundMsgs, &current))
 		{
-			Messages* m = (Messages*)(current->content);
-			(*tokens)[count++] = m->msgid;
+			Messages* m2 = (Messages*)(current->content);
+			(*tokens)[count++] = m2->msgid;
 		}
 		(*tokens)[count] = -1;
 	}

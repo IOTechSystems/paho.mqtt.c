@@ -1,4 +1,4 @@
-.TH "MQTTAsync.h" 3 "Fri Oct 13 2023" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
+.TH "MQTTAsync.h" 3 "Fri Feb 20 2026 15:12:33" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -6,15 +6,15 @@ MQTTAsync.h
 .SH SYNOPSIS
 .br
 .PP
-\fC#include 'MQTTExportDeclarations\&.h'\fP
+\fR#include 'MQTTExportDeclarations\&.h'\fP
 .br
-\fC#include 'MQTTProperties\&.h'\fP
+\fR#include 'MQTTProperties\&.h'\fP
 .br
-\fC#include 'MQTTReasonCodes\&.h'\fP
+\fR#include 'MQTTReasonCodes\&.h'\fP
 .br
-\fC#include 'MQTTSubscribeOpts\&.h'\fP
+\fR#include 'MQTTSubscribeOpts\&.h'\fP
 .br
-\fC#include 'MQTTClientPersistence\&.h'\fP
+\fR#include 'MQTTClientPersistence\&.h'\fP
 .br
 
 .SS "Data Structures"
@@ -248,7 +248,7 @@ MQTTAsync.h
 .RI "typedef void \fBMQTTAsync_onFailure5\fP(void *context, \fBMQTTAsync_failureData5\fP *response)"
 .br
 .ti -1c
-.RI "typedef struct \fBMQTTAsync_responseOptions\fP \fBMQTTAsync_responseOptions\fP"
+.RI "typedef struct MQTTAsync_responseOptions \fBMQTTAsync_responseOptions\fP"
 .br
 .ti -1c
 .RI "typedef struct \fBMQTTAsync_responseOptions\fP \fBMQTTAsync_callOptions\fP"
@@ -400,17 +400,16 @@ Return code: Attempting SSL connection using non-SSL version of library
 .SS "#define MQTTASYNC_BAD_PROTOCOL   \-14"
 Return code: protocol prefix in serverURI should be: 
 .PD 0
-
-.IP "\(bu" 2
+.IP "\(bu" 1
 \fItcp://\fP or \fImqtt://\fP - Insecure TCP 
-.IP "\(bu" 2
-\fIssl://\fP or \fImqtts://\fP - Encrypted SSL/TLS 
-.IP "\(bu" 2
+.IP "\(bu" 1
+\fIssl://\fP or \fItls://\fP or \fImqtts://\fP - Encrypted SSL/TLS 
+.IP "\(bu" 1
 \fIws://\fP - Insecure websockets 
-.IP "\(bu" 2
+.IP "\(bu" 1
 \fIwss://\fP - Secure web sockets
 .PP
-The TLS enabled prefixes (ssl, mqtts, wss) are only valid if the TLS version of the library is linked with\&. 
+The TLS enabled prefixes (ssl, tls, mqtts, wss) are only valid if the TLS version of the library is linked with\&. 
 .SS "#define MQTTASYNC_BAD_MQTT_OPTION   \-15"
 Return code: don't use options for another version of MQTT 
 .SS "#define MQTTASYNC_WRONG_MQTT_VERSION   \-16"
@@ -463,52 +462,55 @@ Bad return code from subscribe, as defined in the 3\&.1\&.1 specification
 
 .SS "#define MQTTAsync_connectOptions_initializer"
 \fBValue:\fP
-.PP
 .nf
-{ {'M', 'Q', 'T', 'C'}, 8, 60, 1, 65535, NULL, NULL, NULL, 30, 0,\
+{ {'M', 'Q', 'T', 'C'}, 8, 60, 1, 65535, NULL, NULL, NULL, 30, 0,\\
 NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_DEFAULT, 0, 1, 60, {0, NULL}, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+.PP
 .fi
 Initializer for connect options for MQTT 3\&.1\&.1 non-WebSocket connections 
 .SS "#define MQTTAsync_connectOptions_initializer5"
 \fBValue:\fP
-.PP
 .nf
-{ {'M', 'Q', 'T', 'C'}, 8, 60, 0, 65535, NULL, NULL, NULL, 30, 0,\
+{ {'M', 'Q', 'T', 'C'}, 8, 60, 0, 65535, NULL, NULL, NULL, 30, 0,\\
 NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_5, 0, 1, 60, {0, NULL}, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+.PP
 .fi
 Initializer for connect options for MQTT 5\&.0 non-WebSocket connections 
 .SS "#define MQTTAsync_connectOptions_initializer_ws"
 \fBValue:\fP
-.PP
 .nf
-{ {'M', 'Q', 'T', 'C'}, 8, 45, 1, 65535, NULL, NULL, NULL, 30, 0,\
+{ {'M', 'Q', 'T', 'C'}, 8, 45, 1, 65535, NULL, NULL, NULL, 30, 0,\\
 NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_DEFAULT, 0, 1, 60, {0, NULL}, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+.PP
 .fi
 Initializer for connect options for MQTT 3\&.1\&.1 WebSockets connections\&. The keepalive interval is set to 45 seconds to avoid webserver 60 second inactivity timeouts\&. 
 .SS "#define MQTTAsync_connectOptions_initializer5_ws"
 \fBValue:\fP
-.PP
 .nf
-{ {'M', 'Q', 'T', 'C'}, 8, 45, 0, 65535, NULL, NULL, NULL, 30, 0,\
+{ {'M', 'Q', 'T', 'C'}, 8, 45, 0, 65535, NULL, NULL, NULL, 30, 0,\\
 NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_5, 0, 1, 60, {0, NULL}, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+.PP
 .fi
 Initializer for connect options for MQTT 5\&.0 WebSockets connections\&. The keepalive interval is set to 45 seconds to avoid webserver 60 second inactivity timeouts\&. 
 .SS "#define MQTTAsync_disconnectOptions_initializer"
 \fBValue:\fP
-.PP
 .nf
- { {'M', 'Q', 'T', 'D'}, 0, 0, NULL, NULL, NULL,\
+        { {'M', 'Q', 'T', 'D'}, 0, 0, NULL, NULL, NULL,\\
         MQTTProperties_initializer, MQTTREASONCODE_SUCCESS, NULL, NULL }
+.PP
 .fi
+
 .SS "#define MQTTAsync_disconnectOptions_initializer5"
 \fBValue:\fP
-.PP
 .nf
-        { {'M', 'Q', 'T', 'D'}, 1, 0, NULL, NULL, NULL,\
+        { {'M', 'Q', 'T', 'D'}, 1, 0, NULL, NULL, NULL,\\
         MQTTProperties_initializer, MQTTREASONCODE_SUCCESS, NULL, NULL }
+.PP
 .fi
+
 .SS "#define MQTTASYNC_TRUE   1"
 Tests whether a request corresponding to a token is complete\&.
+
 .PP
 \fBParameters\fP
 .RS 4
@@ -531,6 +533,7 @@ A handle representing an MQTT client\&. A valid client handle is available follo
 A value representing an MQTT message\&. A token is returned to the client application when a message is published\&. The token can then be used to check that the message was successfully delivered to its destination (see MQTTAsync_publish(), MQTTAsync_publishMessage(), \fBMQTTAsync_deliveryComplete()\fP, and \fBMQTTAsync_getPendingTokens()\fP)\&. 
 .SS "typedef int MQTTAsync_messageArrived(void *context, char *topicName, int topicLen, \fBMQTTAsync_message\fP *message)"
 This is a callback function\&. The client application must provide an implementation of this function to enable asynchronous receipt of messages\&. The function is registered with the client library by passing it as an argument to \fBMQTTAsync_setCallbacks()\fP\&. It is called by the client library when a new message that matches a client subscription has been received from the server\&. This function is executed on a separate thread to the one on which the client application is running\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -557,6 +560,7 @@ This function must return 0 or 1 indicating whether or not the message has been 
 
 .SS "typedef void MQTTAsync_deliveryComplete(void *context, \fBMQTTAsync_token\fP token)"
 This is a callback function\&. The client application must provide an implementation of this function to enable asynchronous notification of delivery of messages to the server\&. The function is registered with the client library by passing it as an argument to \fBMQTTAsync_setCallbacks()\fP\&. It is called by the client library after the client application has published a message to the server\&. It indicates that the necessary handshaking and acknowledgements for the requested quality of service (see \fBMQTTAsync_message\&.qos\fP) have been completed\&. This function is executed on a separate thread to the one on which the client application is running\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -570,6 +574,7 @@ This is a callback function\&. The client application must provide an implementa
 
 .SS "typedef void MQTTAsync_connectionLost(void *context, char *cause)"
 This is a callback function\&. The client application must provide an implementation of this function to enable asynchronous notification of the loss of connection to the server\&. The function is registered with the client library by passing it as an argument to \fBMQTTAsync_setCallbacks()\fP\&. It is called by the client library if the client loses its connection to the server\&. The client application must take appropriate action, such as trying to reconnect or reporting the problem\&. This function is executed on a separate thread to the one on which the client application is running\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -583,6 +588,7 @@ This is a callback function\&. The client application must provide an implementa
 
 .SS "typedef void MQTTAsync_connected(void *context, char *cause)"
 This is a callback function, which will be called when the client library successfully connects\&. This is superfluous when the connection is made in response to a MQTTAsync_connect call, because the onSuccess callback can be used\&. It is intended for use when automatic reconnect is enabled, so that when a reconnection attempt succeeds in the background, the application is notified and can take any required actions\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -596,6 +602,7 @@ This is a callback function, which will be called when the client library succes
 
 .SS "typedef void MQTTAsync_disconnected(void *context, \fBMQTTProperties\fP *properties, enum \fBMQTTReasonCodes\fP reasonCode)"
 This is a callback function, which will be called when the client library receives a disconnect packet from the server\&. This applies to MQTT V5 and above only\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -605,7 +612,7 @@ This is a callback function, which will be called when the client library receiv
 .br
 \fIproperties\fP the properties in the disconnect packet\&. 
 .br
-\fIproperties\fP the reason code from the disconnect packet Currently, \fIcause\fP is always set to NULL\&. 
+\fIreasonCode\fP the reason code from the disconnect packet 
 .RE
 .PP
 
@@ -625,6 +632,7 @@ Return a non-zero value to update the connect data, zero to keep the same data\&
 
 .SS "typedef void MQTTAsync_onSuccess(void *context, \fBMQTTAsync_successData\fP *response)"
 This is a callback function\&. The client application must provide an implementation of this function to enable asynchronous notification of the successful completion of an API call\&. The function is registered with the client library by passing it as an argument in \fBMQTTAsync_responseOptions\fP\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -638,6 +646,7 @@ This is a callback function\&. The client application must provide an implementa
 
 .SS "typedef void MQTTAsync_onSuccess5(void *context, \fBMQTTAsync_successData5\fP *response)"
 This is a callback function, the MQTT V5 version of \fBMQTTAsync_onSuccess\fP\&. The client application must provide an implementation of this function to enable asynchronous notification of the successful completion of an API call\&. The function is registered with the client library by passing it as an argument in \fBMQTTAsync_responseOptions\fP\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -651,6 +660,7 @@ This is a callback function, the MQTT V5 version of \fBMQTTAsync_onSuccess\fP\&.
 
 .SS "typedef void MQTTAsync_onFailure(void *context, \fBMQTTAsync_failureData\fP *response)"
 This is a callback function\&. The client application must provide an implementation of this function to enable asynchronous notification of the unsuccessful completion of an API call\&. The function is registered with the client library by passing it as an argument in \fBMQTTAsync_responseOptions\fP\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -664,6 +674,7 @@ This is a callback function\&. The client application must provide an implementa
 
 .SS "typedef void MQTTAsync_onFailure5(void *context, \fBMQTTAsync_failureData5\fP *response)"
 This is a callback function, the MQTT V5 version of \fBMQTTAsync_onFailure\fP\&. The application must provide an implementation of this function to enable asynchronous notification of the unsuccessful completion of an API call\&. The function is registered with the client library by passing it as an argument in \fBMQTTAsync_responseOptions\fP\&.
+
 .PP
 \fBNote:\fP Neither \fBMQTTAsync_create()\fP nor \fBMQTTAsync_destroy()\fP should be called within this callback\&. 
 .PP
@@ -675,7 +686,7 @@ This is a callback function, the MQTT V5 version of \fBMQTTAsync_onFailure\fP\&.
 .RE
 .PP
 
-.SS "typedef struct \fBMQTTAsync_responseOptions\fP \fBMQTTAsync_responseOptions\fP"
+.SS "typedef struct MQTTAsync_responseOptions MQTTAsync_responseOptions"
 Structure to define call options\&. For MQTT 5\&.0 there is input data as well as that describing the response method\&. So there is now also a synonym \fBMQTTAsync_callOptions\fP to better reflect the use\&. This responseOptions name is kept for backward compatibility\&. 
 .SS "typedef struct \fBMQTTAsync_responseOptions\fP \fBMQTTAsync_callOptions\fP"
 A synonym for responseOptions to better reflect its usage since MQTT 5\&.0 
@@ -698,24 +709,24 @@ This is a callback function prototype which must be implemented if you want to r
 \fBEnumerator\fP
 .in +1c
 .TP
-\fB\fIMQTTASYNC_TRACE_MAXIMUM \fP\fP
+\f(BIMQTTASYNC_TRACE_MAXIMUM \fP
 .TP
-\fB\fIMQTTASYNC_TRACE_MEDIUM \fP\fP
+\f(BIMQTTASYNC_TRACE_MEDIUM \fP
 .TP
-\fB\fIMQTTASYNC_TRACE_MINIMUM \fP\fP
+\f(BIMQTTASYNC_TRACE_MINIMUM \fP
 .TP
-\fB\fIMQTTASYNC_TRACE_PROTOCOL \fP\fP
+\f(BIMQTTASYNC_TRACE_PROTOCOL \fP
 .TP
-\fB\fIMQTTASYNC_TRACE_ERROR \fP\fP
+\f(BIMQTTASYNC_TRACE_ERROR \fP
 .TP
-\fB\fIMQTTASYNC_TRACE_SEVERE \fP\fP
+\f(BIMQTTASYNC_TRACE_SEVERE \fP
 .TP
-\fB\fIMQTTASYNC_TRACE_FATAL \fP\fP
+\f(BIMQTTASYNC_TRACE_FATAL \fP
 .SH "Function Documentation"
 .PP 
-.SS "void MQTTAsync_global_init (\fBMQTTAsync_init_options\fP * inits)"
+.SS "void MQTTAsync_global_init (\fBMQTTAsync_init_options\fP * inits)\fR [extern]\fP"
 Global init of mqtt library\&. Call once on program start to set global behaviour\&. handle_openssl_init - if mqtt library should handle openssl init (1) or rely on the caller to init it before using mqtt (0) 
-.SS "int MQTTAsync_setDisconnected (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_disconnected\fP * co)"
+.SS "int MQTTAsync_setDisconnected (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_disconnected\fP * co)\fR [extern]\fP"
 Sets the \fBMQTTAsync_disconnected()\fP callback function for a client\&. 
 .PP
 \fBParameters\fP
@@ -738,7 +749,7 @@ Sets the \fBMQTTAsync_disconnected()\fP callback function for a client\&.
 .RE
 .PP
 
-.SS "int MQTTAsync_setUpdateConnectOptions (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_updateConnectOptions\fP * co)"
+.SS "int MQTTAsync_setUpdateConnectOptions (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_updateConnectOptions\fP * co)\fR [extern]\fP"
 Sets the \fBMQTTAsync_updateConnectOptions()\fP callback function for a client\&. 
 .PP
 \fBParameters\fP
@@ -751,7 +762,7 @@ Sets the \fBMQTTAsync_updateConnectOptions()\fP callback function for a client\&
 .RE
 .PP
 
-.SS "int MQTTAsync_setBeforePersistenceWrite (\fBMQTTAsync\fP handle, void * context, \fBMQTTPersistence_beforeWrite\fP * co)"
+.SS "int MQTTAsync_setBeforePersistenceWrite (\fBMQTTAsync\fP handle, void * context, \fBMQTTPersistence_beforeWrite\fP * co)\fR [extern]\fP"
 Sets the \fBMQTTPersistence_beforeWrite()\fP callback function for a client\&. 
 .PP
 \fBParameters\fP
@@ -764,7 +775,7 @@ Sets the \fBMQTTPersistence_beforeWrite()\fP callback function for a client\&.
 .RE
 .PP
 
-.SS "int MQTTAsync_setAfterPersistenceRead (\fBMQTTAsync\fP handle, void * context, \fBMQTTPersistence_afterRead\fP * co)"
+.SS "int MQTTAsync_setAfterPersistenceRead (\fBMQTTAsync\fP handle, void * context, \fBMQTTPersistence_afterRead\fP * co)\fR [extern]\fP"
 Sets the \fBMQTTPersistence_afterRead()\fP callback function for a client\&. 
 .PP
 \fBParameters\fP
@@ -777,8 +788,9 @@ Sets the \fBMQTTPersistence_afterRead()\fP callback function for a client\&.
 .RE
 .PP
 
-.SS "int MQTTAsync_setCallbacks (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_connectionLost\fP * cl, \fBMQTTAsync_messageArrived\fP * ma, \fBMQTTAsync_deliveryComplete\fP * dc)"
-This function sets the global callback functions for a specific client\&. If your client application doesn't use a particular callback, set the relevant parameter to NULL\&. Any necessary message acknowledgements and status communications are handled in the background without any intervention from the client application\&. If you do not set a messageArrived callback function, you will not be notified of the receipt of any messages as a result of a subscription\&.
+.SS "int MQTTAsync_setCallbacks (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_connectionLost\fP * cl, \fBMQTTAsync_messageArrived\fP * ma, \fBMQTTAsync_deliveryComplete\fP * dc)\fR [extern]\fP"
+This function sets the global callback functions for a specific client\&. If your client application doesn't use a particular callback, set the relevant parameter to NULL (except for message arrived, which must be given)\&. Any necessary message acknowledgements and status communications are handled in the background without any intervention from the client application\&.
+
 .PP
 \fBNote:\fP The MQTT client must be disconnected when this function is called\&. 
 .PP
@@ -801,8 +813,9 @@ This function sets the global callback functions for a specific client\&. If you
 .RE
 .PP
 
-.SS "int MQTTAsync_setConnectionLostCallback (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_connectionLost\fP * cl)"
+.SS "int MQTTAsync_setConnectionLostCallback (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_connectionLost\fP * cl)\fR [extern]\fP"
 This function sets the callback function for a connection lost event for a specific client\&. Any necessary message acknowledgements and status communications are handled in the background without any intervention from the client application\&.
+
 .PP
 \fBNote:\fP The MQTT client must be disconnected when this function is called\&. 
 .PP
@@ -821,8 +834,9 @@ This function sets the callback function for a connection lost event for a speci
 .RE
 .PP
 
-.SS "int MQTTAsync_setMessageArrivedCallback (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_messageArrived\fP * ma)"
+.SS "int MQTTAsync_setMessageArrivedCallback (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_messageArrived\fP * ma)\fR [extern]\fP"
 This function sets the callback function for a message arrived event for a specific client\&. Any necessary message acknowledgements and status communications are handled in the background without any intervention from the client application\&. If you do not set a messageArrived callback function, you will not be notified of the receipt of any messages as a result of a subscription\&.
+
 .PP
 \fBNote:\fP The MQTT client must be disconnected when this function is called\&. 
 .PP
@@ -841,8 +855,9 @@ This function sets the callback function for a message arrived event for a speci
 .RE
 .PP
 
-.SS "int MQTTAsync_setDeliveryCompleteCallback (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_deliveryComplete\fP * dc)"
+.SS "int MQTTAsync_setDeliveryCompleteCallback (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_deliveryComplete\fP * dc)\fR [extern]\fP"
 This function sets the callback function for a delivery complete event for a specific client\&. Any necessary message acknowledgements and status communications are handled in the background without any intervention from the client application\&.
+
 .PP
 \fBNote:\fP The MQTT client must be disconnected when this function is called\&. 
 .PP
@@ -861,7 +876,7 @@ This function sets the callback function for a delivery complete event for a spe
 .RE
 .PP
 
-.SS "int MQTTAsync_setConnected (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_connected\fP * co)"
+.SS "int MQTTAsync_setConnected (\fBMQTTAsync\fP handle, void * context, \fBMQTTAsync_connected\fP * co)\fR [extern]\fP"
 Sets the \fBMQTTAsync_connected()\fP callback function for a client\&. 
 .PP
 \fBParameters\fP
@@ -879,7 +894,7 @@ Sets the \fBMQTTAsync_connected()\fP callback function for a client\&.
 .RE
 .PP
 
-.SS "int MQTTAsync_reconnect (\fBMQTTAsync\fP handle)"
+.SS "int MQTTAsync_reconnect (\fBMQTTAsync\fP handle)\fR [extern]\fP"
 Reconnects a client with the previously used connect options\&. Connect must have previously been called for this to work\&. 
 .PP
 \fBParameters\fP
@@ -893,7 +908,7 @@ Reconnects a client with the previously used connect options\&. Connect must hav
 .RE
 .PP
 
-.SS "int MQTTAsync_create (\fBMQTTAsync\fP * handle, const char * serverURI, const char * clientId, int persistence_type, void * persistence_context)"
+.SS "int MQTTAsync_create (\fBMQTTAsync\fP * handle, const char * serverURI, const char * clientId, int persistence_type, void * persistence_context)\fR [extern]\fP"
 This function creates an MQTT client ready for connection to the specified server and using the specified persistent storage (see MQTTAsync_persistence)\&. See also \fBMQTTAsync_destroy()\fP\&. 
 .PP
 \fBParameters\fP
@@ -904,13 +919,13 @@ This function creates an MQTT client ready for connection to the specified serve
 .br
  \fItcp://\fP or \fImqtt://\fP - Insecure TCP 
 .br
- \fIssl://\fP or \fImqtts://\fP - Encrypted SSL/TLS 
+ \fIssl://\fP or \fItls://\fP or \fImqtts://\fP - Encrypted SSL/TLS 
 .br
  \fIws://\fP - Insecure websockets 
 .br
  \fIwss://\fP - Secure web sockets 
 .br
- The TLS enabled prefixes (ssl, mqtts, wss) are only valid if a TLS version of the library is linked with\&. For \fIhost\fP, you can specify either an IP address or a host name\&. For instance, to connect to a server running on the local machines with the default MQTT port, specify \fItcp://localhost:1883\fP\&. 
+ The TLS enabled prefixes (ssl, tls, mqtts, wss) are only valid if a TLS version of the library is linked with\&. For \fIhost\fP, you can specify either an IP address or a host name\&. For instance, to connect to a server running on the local machines with the default MQTT port, specify \fItcp://localhost:1883\fP\&. 
 .br
 \fIclientId\fP The client identifier passed to the server when the client connects to it\&. It is a null-terminated UTF-8 encoded string\&. 
 .br
@@ -931,9 +946,9 @@ This function creates an MQTT client ready for connection to the specified serve
 .RE
 .PP
 
-.SS "int MQTTAsync_createWithOptions (\fBMQTTAsync\fP * handle, const char * serverURI, const char * clientId, int persistence_type, void * persistence_context, \fBMQTTAsync_createOptions\fP * options)"
+.SS "int MQTTAsync_createWithOptions (\fBMQTTAsync\fP * handle, const char * serverURI, const char * clientId, int persistence_type, void * persistence_context, \fBMQTTAsync_createOptions\fP * options)\fR [extern]\fP"
 
-.SS "int MQTTAsync_connect (\fBMQTTAsync\fP handle, const \fBMQTTAsync_connectOptions\fP * options)"
+.SS "int MQTTAsync_connect (\fBMQTTAsync\fP handle, const \fBMQTTAsync_connectOptions\fP * options)\fR [extern]\fP"
 This function attempts to connect a previously-created client (see \fBMQTTAsync_create()\fP) to an MQTT server using the specified options\&. If you want to enable asynchronous message and status notifications, you must call \fBMQTTAsync_setCallbacks()\fP prior to \fBMQTTAsync_connect()\fP\&. 
 .PP
 \fBParameters\fP
@@ -965,7 +980,7 @@ This function attempts to connect a previously-created client (see \fBMQTTAsync_
 .RE
 .PP
 
-.SS "int MQTTAsync_disconnect (\fBMQTTAsync\fP handle, const \fBMQTTAsync_disconnectOptions\fP * options)"
+.SS "int MQTTAsync_disconnect (\fBMQTTAsync\fP handle, const \fBMQTTAsync_disconnectOptions\fP * options)\fR [extern]\fP"
 This function attempts to disconnect the client from the MQTT server\&. In order to allow the client time to complete handling of messages that are in-flight when this function is called, a timeout period is specified\&. When the timeout period has expired, the client disconnects even if there are still outstanding message acknowledgements\&. The next time the client connects to the same server, any QoS 1 or 2 messages which have not completed will be retried depending on the cleansession settings for both the previous and the new connection (see \fBMQTTAsync_connectOptions\&.cleansession\fP and \fBMQTTAsync_connect()\fP)\&. 
 .PP
 \fBParameters\fP
@@ -981,7 +996,7 @@ This function attempts to disconnect the client from the MQTT server\&. In order
 .RE
 .PP
 
-.SS "int MQTTAsync_isConnected (\fBMQTTAsync\fP handle)"
+.SS "int MQTTAsync_isConnected (\fBMQTTAsync\fP handle)\fR [extern]\fP"
 This function allows the client application to test whether or not a client is currently connected to the MQTT server\&. 
 .PP
 \fBParameters\fP
@@ -995,7 +1010,7 @@ Boolean true if the client is connected, otherwise false\&.
 .RE
 .PP
 
-.SS "int MQTTAsync_subscribe (\fBMQTTAsync\fP handle, const char * topic, int qos, \fBMQTTAsync_responseOptions\fP * response)"
+.SS "int MQTTAsync_subscribe (\fBMQTTAsync\fP handle, const char * topic, int qos, \fBMQTTAsync_responseOptions\fP * response)\fR [extern]\fP"
 This function attempts to subscribe a client to a single topic, which may contain wildcards (see \fBSubscription wildcards\fP)\&. This call also specifies the \fBQuality of service\fP requested for the subscription (see also \fBMQTTAsync_subscribeMany()\fP)\&. 
 .PP
 \fBParameters\fP
@@ -1015,7 +1030,7 @@ This function attempts to subscribe a client to a single topic, which may contai
 .RE
 .PP
 
-.SS "int MQTTAsync_subscribeMany (\fBMQTTAsync\fP handle, int count, char *const * topic, const int * qos, \fBMQTTAsync_responseOptions\fP * response)"
+.SS "int MQTTAsync_subscribeMany (\fBMQTTAsync\fP handle, int count, char *const * topic, const int * qos, \fBMQTTAsync_responseOptions\fP * response)\fR [extern]\fP"
 This function attempts to subscribe a client to a list of topics, which may contain wildcards (see \fBSubscription wildcards\fP)\&. This call also specifies the \fBQuality of service\fP requested for each topic (see also \fBMQTTAsync_subscribe()\fP)\&. 
 .PP
 \fBParameters\fP
@@ -1037,7 +1052,7 @@ This function attempts to subscribe a client to a list of topics, which may cont
 .RE
 .PP
 
-.SS "int MQTTAsync_unsubscribe (\fBMQTTAsync\fP handle, const char * topic, \fBMQTTAsync_responseOptions\fP * response)"
+.SS "int MQTTAsync_unsubscribe (\fBMQTTAsync\fP handle, const char * topic, \fBMQTTAsync_responseOptions\fP * response)\fR [extern]\fP"
 This function attempts to remove an existing subscription made by the specified client\&. 
 .PP
 \fBParameters\fP
@@ -1055,7 +1070,7 @@ This function attempts to remove an existing subscription made by the specified 
 .RE
 .PP
 
-.SS "int MQTTAsync_unsubscribeMany (\fBMQTTAsync\fP handle, int count, char *const * topic, \fBMQTTAsync_responseOptions\fP * response)"
+.SS "int MQTTAsync_unsubscribeMany (\fBMQTTAsync\fP handle, int count, char *const * topic, \fBMQTTAsync_responseOptions\fP * response)\fR [extern]\fP"
 This function attempts to remove existing subscriptions to a list of topics made by the specified client\&. 
 .PP
 \fBParameters\fP
@@ -1075,7 +1090,7 @@ This function attempts to remove existing subscriptions to a list of topics made
 .RE
 .PP
 
-.SS "int MQTTAsync_send (\fBMQTTAsync\fP handle, const char * destinationName, int payloadlen, const void * payload, int qos, int retained, \fBMQTTAsync_responseOptions\fP * response)"
+.SS "int MQTTAsync_send (\fBMQTTAsync\fP handle, const char * destinationName, int payloadlen, const void * payload, int qos, int retained, \fBMQTTAsync_responseOptions\fP * response)\fR [extern]\fP"
 This function attempts to publish a message to a given topic (see also \fBMQTTAsync_sendMessage()\fP)\&. An \fBMQTTAsync_token\fP is issued when this function returns successfully if the QoS is greater than 0\&. If the client application needs to test for successful delivery of messages, a callback should be set (see \fBMQTTAsync_onSuccess()\fP and \fBMQTTAsync_deliveryComplete()\fP)\&. 
 .PP
 \fBParameters\fP
@@ -1101,7 +1116,7 @@ This function attempts to publish a message to a given topic (see also \fBMQTTAs
 .RE
 .PP
 
-.SS "int MQTTAsync_sendMessage (\fBMQTTAsync\fP handle, const char * destinationName, const \fBMQTTAsync_message\fP * msg, \fBMQTTAsync_responseOptions\fP * response)"
+.SS "int MQTTAsync_sendMessage (\fBMQTTAsync\fP handle, const char * destinationName, const \fBMQTTAsync_message\fP * msg, \fBMQTTAsync_responseOptions\fP * response)\fR [extern]\fP"
 This function attempts to publish a message to a given topic (see also MQTTAsync_publish())\&. An \fBMQTTAsync_token\fP is issued when this function returns successfully if the QoS is greater than 0\&. If the client application needs to test for successful delivery of messages, a callback should be set (see \fBMQTTAsync_onSuccess()\fP and \fBMQTTAsync_deliveryComplete()\fP)\&. 
 .PP
 \fBParameters\fP
@@ -1121,8 +1136,9 @@ This function attempts to publish a message to a given topic (see also MQTTAsync
 .RE
 .PP
 
-.SS "int MQTTAsync_getPendingTokens (\fBMQTTAsync\fP handle, \fBMQTTAsync_token\fP ** tokens)"
+.SS "int MQTTAsync_getPendingTokens (\fBMQTTAsync\fP handle, \fBMQTTAsync_token\fP ** tokens)\fR [extern]\fP"
 This function sets a pointer to an array of tokens for messages that are currently in-flight (pending completion)\&.
+
 .PP
 \fBImportant note:\fP The memory used to hold the array of tokens is malloc()'d in this function\&. The client application is responsible for freeing this memory when it is no longer required\&. 
 .PP
@@ -1139,10 +1155,11 @@ This function sets a pointer to an array of tokens for messages that are current
 .RE
 .PP
 
-.SS "int MQTTAsync_isComplete (\fBMQTTAsync\fP handle, \fBMQTTAsync_token\fP token)"
+.SS "int MQTTAsync_isComplete (\fBMQTTAsync\fP handle, \fBMQTTAsync_token\fP token)\fR [extern]\fP"
 
-.SS "int MQTTAsync_waitForCompletion (\fBMQTTAsync\fP handle, \fBMQTTAsync_token\fP token, unsigned long timeout)"
+.SS "int MQTTAsync_waitForCompletion (\fBMQTTAsync\fP handle, \fBMQTTAsync_token\fP token, unsigned long timeout)\fR [extern]\fP"
 Waits for a request corresponding to a token to complete\&. This only works for messages with QoS greater than 0\&. A QoS 0 message has no MQTT token\&. This function will always return \fBMQTTASYNC_SUCCESS\fP for a QoS 0 message\&.
+
 .PP
 \fBParameters\fP
 .RS 4
@@ -1159,7 +1176,7 @@ Waits for a request corresponding to a token to complete\&. This only works for 
 .RE
 .PP
 
-.SS "void MQTTAsync_freeMessage (\fBMQTTAsync_message\fP ** msg)"
+.SS "void MQTTAsync_freeMessage (\fBMQTTAsync_message\fP ** msg)\fR [extern]\fP"
 This function frees memory allocated to an MQTT message, including the additional memory allocated to the message payload\&. The client application calls this function when the message has been fully processed\&. \fBImportant note:\fP This function does not free the memory allocated to a message topic string\&. It is the responsibility of the client application to free this memory using the \fBMQTTAsync_free()\fP library function\&. 
 .PP
 \fBParameters\fP
@@ -1168,7 +1185,7 @@ This function frees memory allocated to an MQTT message, including the additiona
 .RE
 .PP
 
-.SS "void MQTTAsync_free (void * ptr)"
+.SS "void MQTTAsync_free (void * ptr)\fR [extern]\fP"
 This function frees memory allocated by the MQTT C client library, especially the topic name\&. This is needed on Windows when the client library and application program have been compiled with different versions of the C compiler\&. It is thus good policy to always use this function when freeing any MQTT C client- allocated memory\&. 
 .PP
 \fBParameters\fP
@@ -1177,7 +1194,7 @@ This function frees memory allocated by the MQTT C client library, especially th
 .RE
 .PP
 
-.SS "void* MQTTAsync_malloc (size_t size)"
+.SS "void * MQTTAsync_malloc (size_t size)\fR [extern]\fP"
 This function is used to allocate memory to be used or freed by the MQTT C client library, especially the data in the \fBMQTTPersistence_afterRead\fP and \fBMQTTPersistence_beforeWrite\fP callbacks\&. This is needed on Windows when the client library and application program have been compiled with different versions of the C compiler\&. 
 .PP
 \fBParameters\fP
@@ -1186,7 +1203,7 @@ This function is used to allocate memory to be used or freed by the MQTT C clien
 .RE
 .PP
 
-.SS "void MQTTAsync_destroy (\fBMQTTAsync\fP * handle)"
+.SS "void MQTTAsync_destroy (\fBMQTTAsync\fP * handle)\fR [extern]\fP"
 This function frees the memory allocated to an MQTT client (see \fBMQTTAsync_create()\fP)\&. It should be called when the client is no longer required\&. 
 .PP
 \fBParameters\fP
@@ -1195,7 +1212,7 @@ This function frees the memory allocated to an MQTT client (see \fBMQTTAsync_cre
 .RE
 .PP
 
-.SS "void MQTTAsync_setTraceLevel (enum \fBMQTTASYNC_TRACE_LEVELS\fP level)"
+.SS "void MQTTAsync_setTraceLevel (enum \fBMQTTASYNC_TRACE_LEVELS\fP level)\fR [extern]\fP"
 This function sets the level of trace information which will be returned in the trace callback\&. 
 .PP
 \fBParameters\fP
@@ -1204,7 +1221,7 @@ This function sets the level of trace information which will be returned in the 
 .RE
 .PP
 
-.SS "void MQTTAsync_setTraceCallback (\fBMQTTAsync_traceCallback\fP * callback)"
+.SS "void MQTTAsync_setTraceCallback (\fBMQTTAsync_traceCallback\fP * callback)\fR [extern]\fP"
 This function sets the trace callback if needed\&. If set to NULL, no trace information will be returned\&. The default trace level is MQTTASYNC_TRACE_MINIMUM\&. 
 .PP
 \fBParameters\fP
@@ -1213,7 +1230,7 @@ This function sets the trace callback if needed\&. If set to NULL, no trace info
 .RE
 .PP
 
-.SS "\fBMQTTAsync_nameValue\fP* MQTTAsync_getVersionInfo (void)"
+.SS "\fBMQTTAsync_nameValue\fP * MQTTAsync_getVersionInfo (void )\fR [extern]\fP"
 This function returns version information about the library\&. no trace information will be returned\&. The default trace level is MQTTASYNC_TRACE_MINIMUM 
 .PP
 \fBReturns\fP
@@ -1222,7 +1239,7 @@ an array of strings describing the library\&. The last entry is a NULL pointer\&
 .RE
 .PP
 
-.SS "const char* MQTTAsync_strerror (int code)"
+.SS "const char * MQTTAsync_strerror (int code)\fR [extern]\fP"
 Returns a pointer to a string representation of the error code, or NULL\&. Do not free after use\&. Returns NULL if the error code is unknown\&. 
 .PP
 \fBParameters\fP

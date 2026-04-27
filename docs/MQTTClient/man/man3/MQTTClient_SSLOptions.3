@@ -1,4 +1,4 @@
-.TH "MQTTClient_SSLOptions" 3 "Fri Oct 13 2023" "Paho MQTT C Client Library" \" -*- nroff -*-
+.TH "MQTTClient_SSLOptions" 3 "Fri Feb 20 2026 15:12:33" "Paho MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,7 +7,7 @@ MQTTClient_SSLOptions
 .br
 .PP
 .PP
-\fC#include <MQTTClient\&.h>\fP
+\fR#include <MQTTClient\&.h>\fP
 .SS "Data Fields"
 
 .in +1c
@@ -70,9 +70,9 @@ MQTTClient_SSLOptions
 .PP 
 MQTTClient_sslProperties defines the settings to establish an SSL/TLS connection using the OpenSSL library\&. It covers the following scenarios:
 .IP "\(bu" 2
-Server authentication: The client needs the digital certificate of the server\&. It is included in a store containting trusted material (also known as 'trust store')\&.
+Server authentication: The client needs the digital certificate of the server\&. It is included in a store containting trusted material (also known as "trust store")\&.
 .IP "\(bu" 2
-Mutual authentication: Both client and server are authenticated during the SSL handshake\&. In addition to the digital certificate of the server in a trust store, the client will need its own digital certificate and the private key used to sign its digital certificate stored in a 'key store'\&.
+Mutual authentication: Both client and server are authenticated during the SSL handshake\&. In addition to the digital certificate of the server in a trust store, the client will need its own digital certificate and the private key used to sign its digital certificate stored in a "key store"\&.
 .IP "\(bu" 2
 Anonymous connection: Both client and server do not get authenticated and no credentials are needed to establish an SSL connection\&. Note that this scenario is not fully secure since it is subject to man-in-the-middle attacks\&. 
 .PP
@@ -92,7 +92,7 @@ If not included in the sslKeyStore, this setting points to the file in PEM forma
 .SS "const char* privateKeyPassword"
 The password to load the client's privateKey if encrypted\&. 
 .SS "const char* enabledCipherSuites"
-The list of cipher suites that the client will present to the server during the SSL handshake\&. For a full explanation of the cipher list format, please see the OpenSSL on-line documentation: http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT If this setting is ommitted, its default value will be 'ALL', that is, all the cipher suites -excluding those offering no encryption- will be considered\&. This setting can be used to set an SSL anonymous connection ('aNULL' string value, for instance)\&. 
+The list of cipher suites that the client will present to the server during the SSL handshake\&. For a full explanation of the cipher list format, please see the OpenSSL on-line documentation: http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT If this setting is ommitted, its default value will be "ALL", that is, all the cipher suites -excluding those offering no encryption- will be considered\&. This setting can be used to set an SSL anonymous connection ("aNULL" string value, for instance)\&. 
 .SS "int enableServerCertAuth"
 True/False option to enable verification of the server certificate 
 .SS "int sslVersion"

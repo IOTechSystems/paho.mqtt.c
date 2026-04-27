@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2023 IBM Corp. and others
+ * Copyright (c) 2009, 2024 IBM Corp. and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -481,7 +481,7 @@ int test_client_topic_aliases(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM))
-			topicAliasMaximum = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM);
+			topicAliasMaximum = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM);
 
 		logProperties(response.properties);
 		MQTTResponse_free(response);
@@ -620,7 +620,7 @@ int test2_messageArrived(void* context, char* topicName, int topicLen, MQTTClien
 		const int props_count = 0;
 
 		if (MQTTProperties_hasProperty(&message->properties, MQTTPROPERTY_CODE_TOPIC_ALIAS))
-			topicAlias = MQTTProperties_getNumericValue(&message->properties, MQTTPROPERTY_CODE_TOPIC_ALIAS);
+			topicAlias = (int)MQTTProperties_getNumericValue(&message->properties, MQTTPROPERTY_CODE_TOPIC_ALIAS);
 
 		if (received == 1)
 			first_topic_alias = topicAlias;
@@ -699,7 +699,7 @@ int test_server_topic_aliases(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM))
-			topicAliasMaximum = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM);
+			topicAliasMaximum = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM);
 
 		logProperties(response.properties);
 		MQTTResponse_free(response);
@@ -766,7 +766,7 @@ int test_subscription_ids_messageArrived(void* context, char* topicName, int top
 
 		for (i = 0; i < subsidcount; ++i)
 		{
-			int subsid = MQTTProperties_getNumericValueAt(&message->properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER, i);
+			int subsid = (int)MQTTProperties_getNumericValueAt(&message->properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER, i);
 			assert("Subsid is i+1", subsid == i+1, "subsid is not correct %d\n", subsid);
 		}
 		logProperties(&message->properties);
@@ -833,7 +833,7 @@ int test_subscription_ids(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE))
-			subsids = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE);
+			subsids = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE);
 
 		logProperties(response.properties);
 		MQTTResponse_free(response);
@@ -969,7 +969,7 @@ int test_flow_control(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM))
-			receive_maximum = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
+			receive_maximum = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
 
 		logProperties(response.properties);
 		MQTTResponse_free(response);
@@ -1062,7 +1062,7 @@ int test_error_reporting(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM))
-			receive_maximum = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
+			receive_maximum = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
 
 		logProperties(response.properties);
 		MQTTResponse_free(response);
@@ -1195,7 +1195,7 @@ int test_qos_1_2_errors(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM))
-			receive_maximum = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
+			receive_maximum = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_RECEIVE_MAXIMUM);
 
 		logProperties(response.properties);
 		MQTTResponse_free(response);
@@ -1412,7 +1412,7 @@ int test_request_response(struct Options options)
 	if (response.properties)
 	{
 		if (MQTTProperties_hasProperty(response.properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE))
-			subsids = MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE);
+			subsids = (int)MQTTProperties_getNumericValue(response.properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE);
 
 		MyLog(LOGA_INFO, "Connack properties:");
 		logProperties(response.properties);
@@ -1526,7 +1526,7 @@ int test_subscribe_options_messageArrived(void* context, char* topicName, int to
 		subsidcount = MQTTProperties_propertyCount(&message->properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER);
 		assert("Subsidcount is i", subsidcount == 1, "subsidcount is not correct %d\n", subsidcount);
 
-		subsid = MQTTProperties_getNumericValueAt(&message->properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER, 0);
+		subsid = (int)MQTTProperties_getNumericValueAt(&message->properties, MQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER, 0);
 		assert("Subsid is 2", subsid == 2, "subsid is not correct %d\n", subsid);
 	}
 
@@ -1814,7 +1814,7 @@ int main(int argc, char** argv)
 {
 	int rc = 0,
 		i;
- 	int (*tests[])(struct Options options) = {NULL,
+ 	int (*tests[])(struct Options) = {NULL,
  		test_client_topic_aliases,
 		test_server_topic_aliases,
  		test_subscription_ids,

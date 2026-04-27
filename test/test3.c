@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2022 IBM Corp., Ian Craggs and others
+ * Copyright (c) 2012, 2025 IBM Corp., Ian Craggs and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -88,7 +88,7 @@ struct Options
 	int websockets;
 } options =
 {
-	"ssl://localhost:18883",
+	"tls://localhost:18883",
 	"mqtts://localhost:18884",
 	"ssl://localhost:18887",
 	"mqtts://localhost:18885",
@@ -1704,7 +1704,7 @@ int main(int argc, char** argv)
 {
 	int* numtests = &tests;
 	int rc = 0;
- 	int (*tests[])(struct Options options) = {NULL, test1, test2a_s, test2a_m, test2b, test2c, test3a_s, test3a_m, test3b, test4_s, test4_m, test6,
+ 	int (*tests[])(struct Options) = {NULL, test1, test2a_s, test2a_m, test2b, test2c, test3a_s, test3a_m, test3b, test4_s, test4_m, test6,
  	  test2e_s /*test5a, test5b,test5c */};
 	//MQTTClient_nameValue* info;
 

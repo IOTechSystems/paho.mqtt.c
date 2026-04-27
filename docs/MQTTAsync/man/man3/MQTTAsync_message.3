@@ -1,4 +1,4 @@
-.TH "MQTTAsync_message" 3 "Fri Oct 13 2023" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
+.TH "MQTTAsync_message" 3 "Fri Feb 20 2026 15:12:33" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,7 +7,7 @@ MQTTAsync_message
 .br
 .PP
 .PP
-\fC#include <MQTTAsync\&.h>\fP
+\fR#include <MQTTAsync\&.h>\fP
 .SS "Data Fields"
 
 .in +1c
@@ -54,20 +54,32 @@ The length of the MQTT message payload in bytes\&.
 A pointer to the payload of the MQTT message\&. 
 .SS "int qos"
 The quality of service (QoS) assigned to the message\&. There are three levels of QoS: 
-.IP "\fB\fBQoS0\fP \fP" 1c
+
+.PP
+.IP "\fB\fBQoS0\fP 
+.IP "" 1c
 Fire and forget - the message may not be delivered 
-.IP "\fB\fBQoS1\fP \fP" 1c
+
+.PP
+.IP "\fB\fBQoS1\fP 
+.IP "" 1c
 At least once - the message will be delivered, but may be delivered more than once in some circumstances\&. 
-.IP "\fB\fBQoS2\fP \fP" 1c
+
+.PP
+.IP "\fB\fBQoS2\fP 
+.IP "" 1c
 Once and one only - the message will be delivered exactly once\&. 
+
 .PP
 
 .SS "int retained"
 The retained flag serves two purposes depending on whether the message it is associated with is being published or received\&.
+
 .PP
 \fBretained = true\fP
 .br
  For messages being published, a true setting indicates that the MQTT server should retain a copy of the message\&. The message will then be transmitted to new subscribers to a topic that matches the message topic\&. For subscribers registering a new subscription, the flag being true indicates that the received message is not a new one, but one that has been retained by the MQTT server\&.
+
 .PP
 \fBretained = false\fP 
 .br

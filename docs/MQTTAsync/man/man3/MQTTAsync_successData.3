@@ -1,4 +1,4 @@
-.TH "MQTTAsync_successData" 3 "Fri Oct 13 2023" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
+.TH "MQTTAsync_successData" 3 "Fri Feb 20 2026 15:12:33" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,7 +7,7 @@ MQTTAsync_successData
 .br
 .PP
 .PP
-\fC#include <MQTTAsync\&.h>\fP
+\fR#include <MQTTAsync\&.h>\fP
 .SS "Data Fields"
 
 .in +1c
@@ -69,7 +69,7 @@ For subscribeMany, if more than one subscription was requested, the list of gran
 the message being sent to the server 
 .SS "char* destinationName"
 the topic destination for the message 
-.SS "struct { \&.\&.\&. }  pub"
+.SS "struct  { \&.\&.\&. }  pub"
 For publish, the message being sent to the server\&. 
 .SS "char* serverURI"
 the connection string of the server 
@@ -77,9 +77,9 @@ the connection string of the server
 the version of MQTT being used 
 .SS "int sessionPresent"
 the session present flag returned from the server 
-.SS "struct { \&.\&.\&. }  connect"
+.SS "struct  { \&.\&.\&. }  connect"
 
-.SS "union { \&.\&.\&. }  alt"
+.SS "union  { \&.\&.\&. }  alt"
 A union of the different values that can be returned for subscribe, unsubscribe and publish\&. 
 
 .SH "Author"

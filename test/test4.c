@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2022 IBM Corp., Ian Craggs
+ * Copyright (c) 2009, 2024 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -1754,7 +1754,7 @@ void trace_callback(enum MQTTASYNC_TRACE_LEVELS level, char* message)
 int main(int argc, char** argv)
 {
 	int rc = 0;
- 	int (*tests[])(struct Options options) = {NULL, test1, test2, test3, test4, test5, test6, test7, test8}; /* indexed starting from 1 */
+ 	int (*tests[])(struct Options) = {NULL, test1, test2, test3, test4, test5, test6, test7, test8}; /* indexed starting from 1 */
 	MQTTAsync_nameValue* info;
 	int i;
 

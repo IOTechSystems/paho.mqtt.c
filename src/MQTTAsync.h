@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2023 IBM Corp., Ian Craggs and others
+ * Copyright (c) 2009, 2026 IBM Corp., Ian Craggs and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -29,9 +29,11 @@
  * @cond MQTTAsync_main
  * @mainpage Asynchronous MQTT client library for C (MQTTAsync)
  *
- * &copy; Copyright 2009, 2023 IBM Corp., Ian Craggs and others
+ * &copy; Copyright 2009, 2026 IBM Corp., Ian Craggs and others.
  *
  * @brief An Asynchronous MQTT client library for C.
+ *
+ * Version 1.3.16
  *
  * An MQTT client application connects to MQTT-capable servers.
  * A typical client is responsible for collecting information from a telemetry
@@ -78,6 +80,7 @@
  * <li>@ref tracing</li>
  * <li>@ref auto_reconnect</li>
  * <li>@ref offline_publish</li>
+ * <li>@ref HTTP_proxies</li>
  * </ul>
  * @endcond
  */
@@ -104,6 +107,8 @@
 #include "MQTTSubscribeOpts.h"
 #if !defined(NO_PERSISTENCE)
 #include "MQTTClientPersistence.h"
+#else
+#define MQTTCLIENT_PERSISTENCE_NONE 1
 #endif
 
 /**
@@ -172,11 +177,11 @@
 /**
  * Return code: protocol prefix in serverURI should be:
  * @li @em tcp:// or @em mqtt:// - Insecure TCP
- * @li @em ssl:// or @em mqtts:// - Encrypted SSL/TLS
+ * @li @em ssl:// or @em tls:// or @em mqtts:// - Encrypted SSL/TLS
  * @li @em ws:// - Insecure websockets
  * @li @em wss:// - Secure web sockets
  *
- * The TLS enabled prefixes (ssl, mqtts, wss) are only valid if the TLS
+ * The TLS enabled prefixes (ssl, tls, mqtts, wss) are only valid if the TLS
  * version of the library is linked with.
  */
 #define MQTTASYNC_BAD_PROTOCOL -14
@@ -442,8 +447,7 @@ typedef void MQTTAsync_connected(void* context, char* cause);
  * @param context A pointer to the <i>context</i> value originally passed to
  * MQTTAsync_setCallbacks(), which contains any application-specific context.
  * @param properties the properties in the disconnect packet.
- * @param properties the reason code from the disconnect packet
- * Currently, <i>cause</i> is always set to NULL.
+ * @param reasonCode the reason code from the disconnect packet
  */
 typedef void MQTTAsync_disconnected(void* context, MQTTProperties* properties,
 		enum MQTTReasonCodes reasonCode);
@@ -520,6 +524,7 @@ typedef int MQTTAsync_updateConnectOptions(void* context, MQTTAsync_connectData*
  */
 LIBMQTT_API int MQTTAsync_setUpdateConnectOptions(MQTTAsync handle, void* context, MQTTAsync_updateConnectOptions* co);
 
+#if !defined(NO_PERSISTENCE)
 /**
  * Sets the MQTTPersistence_beforeWrite() callback function for a client.
  * @param handle A valid client handle from a successful call to MQTTAsync_create().
@@ -542,7 +547,7 @@ LIBMQTT_API int MQTTAsync_setBeforePersistenceWrite(MQTTAsync handle, void* cont
  * function.  NULL removes the callback setting.
  */
 LIBMQTT_API int MQTTAsync_setAfterPersistenceRead(MQTTAsync handle, void* context, MQTTPersistence_afterRead* co);
-
+#endif
 
 /** The data returned on completion of an unsuccessful API call in the response callback onFailure. */
 typedef struct
@@ -790,11 +795,10 @@ typedef struct MQTTAsync_responseOptions MQTTAsync_callOptions;
 /**
  * This function sets the global callback functions for a specific client.
  * If your client application doesn't use a particular callback, set the
- * relevant parameter to NULL. Any necessary message acknowledgements and
- * status communications are handled in the background without any intervention
- * from the client application.  If you do not set a messageArrived callback
- * function, you will not be notified of the receipt of any messages as a
- * result of a subscription.
+ * relevant parameter to NULL (except for message arrived, which must be given).
+ * Any necessary message acknowledgements and status communications are handled
+ * in the background without any intervention
+ * from the client application.
  *
  * <b>Note:</b> The MQTT client must be disconnected when this function is
  * called.
@@ -927,13 +931,13 @@ LIBMQTT_API int MQTTAsync_reconnect(MQTTAsync handle);
  * <br>
  * @em tcp:// or @em mqtt:// - Insecure TCP
  * <br>
- * @em ssl:// or @em mqtts:// - Encrypted SSL/TLS
+ * @em ssl:// or @em tls:// or @em mqtts:// - Encrypted SSL/TLS
  * <br>
  * @em ws:// - Insecure websockets
  * <br>
  * @em wss:// - Secure web sockets
  * <br>
- * The TLS enabled prefixes (ssl, mqtts, wss) are only valid if a TLS
+ * The TLS enabled prefixes (ssl, tls, mqtts, wss) are only valid if a TLS
  * version of the library is linked with.
  * For <i>host</i>, you can specify either an IP address or a host name. For
  * instance, to connect to a server running on the local machines with the
@@ -1327,8 +1331,8 @@ typedef struct
 	/**
 	  * An array of null-terminated strings specifying the servers to
       * which the client will connect. Each string takes the form <i>protocol://host:port</i>.
-      * <i>protocol</i> must be <i>tcp</i>, <i>ssl</i>, <i>ws</i> or <i>wss</i>.
-      * The TLS enabled prefixes (ssl, wss) are only valid if a TLS version of the library
+      * <i>protocol</i> must be <i>tcp</i>, <i>ssl</i>, <i>tls</i>, <i>ws</i> or <i>wss</i>.
+      * The TLS enabled prefixes (ssl, tls, wss) are only valid if a TLS version of the library
       * is linked with.
       * For <i>host</i>, you can
       * specify either an IP address or a domain name. For instance, to connect to
@@ -1391,11 +1395,13 @@ typedef struct
 	 */
 	const MQTTAsync_nameValue* httpHeaders;
 	/**
-	 * HTTP proxy
-	 */
+	* The string value of the HTTP proxy. Examples:
+    *  - http://your.proxy.server:8080/
+    *  - http://user:pass@my.proxy.server:8080/
+	*/
 	const char* httpProxy;
 	/**
-	 * HTTPS proxy
+	 * HTTPS proxy setting. See ::MQTTAsync_connectOptions.httpProxy and the section @ref HTTP_proxies.
 	 */
 	const char* httpsProxy;
 } MQTTAsync_connectOptions;
@@ -1942,7 +1948,7 @@ LIBMQTT_API const char* MQTTAsync_strerror(int code);
 #include <OsWrapper.h>
 #endif
 
-#define ADDRESS     "tcp://mqtt.eclipseprojects.io:1883"
+#define ADDRESS     "tcp://test.mosquitto.org:1883"
 #define CLIENTID    "ExampleClientPub"
 #define TOPIC       "MQTT Examples"
 #define PAYLOAD     "Hello World!"
@@ -2113,7 +2119,7 @@ int main(int argc, char* argv[])
 #include <OsWrapper.h>
 #endif
 
-#define ADDRESS     "tcp://mqtt.eclipseprojects.io:1883"
+#define ADDRESS     "tcp://test.mosquitto.org:1883"
 #define CLIENTID    "ExampleClientSub"
 #define TOPIC       "MQTT Examples"
 #define PAYLOAD     "Hello World!"
@@ -2394,6 +2400,21 @@ exit:
     20130528 163909.209 Heap scan end
   * @endcode
   * @endcond
+  *
+√* @page HTTP_proxies HTTP Proxies
+  * The use of HTTP proxies can be controlled by environment variables or API calls.
+  *
+  * The ::MQTTAsync_connectOptions.httpProxy and ::MQTTAsync_connectOptions.httpsProxy fields
+  * of the ::MQTTAsync_connectOptions structure override any settings in the environment.
+  *
+  * If the environment variable PAHO_C_CLIENT_USE_HTTP_PROXY is set to TRUE, then the
+  * http_proxy or https_proxy (lower case only) environment variables are used, for plain
+  * TCP and TLS-secured connections respectively.
+  *
+  * The no_proxy environment variable can be used to exclude certain hosts from using an
+  * environment variable chosen proxy. This does not apply to a proxy selected through the API.
+  * The no_proxy environment variable is lower case only, and is a list of comma-separated
+  * hostname:port values. Suffixes are matched (e.g. example.com will match test.example.com).
   */
 
 #if defined(__cplusplus)

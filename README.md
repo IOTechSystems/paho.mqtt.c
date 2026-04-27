@@ -31,7 +31,7 @@ The Paho C client comprises four variant libraries, shared or static:
 
 ## Usage and API
 
-Detailed API documentation [is available online](https://eclipse.github.io/paho.mqtt.c/MQTTClient/html/).  It is also available by building the Doxygen docs in the  ``doc`` directory. 
+Detailed API documentation [is available online](https://eclipse-paho.github.io/paho.mqtt.c/MQTTClient/html/).  It is also available by building the Doxygen docs in the  ``doc`` directory.
 
 Samples are available in the Doxygen docs and also in `src/samples` for reference.  These are:
 
@@ -47,6 +47,27 @@ Some potentially useful blog posts:
 - [A story of MQTT 5.0](https://modelbasedtesting.co.uk/2018/04/09/a-story-of-mqtt-5-0/)
 
 [Various MQTT and MQTT-SN talks I've given.](https://modelbasedtesting.co.uk/talks-ive-given/)
+
+### Supported Network Protocols
+
+The library supports connecting to an MQTT server using TCP, SSL/TLS, Unix-domain sockets, and websockets (secure and insecure). This is chosen by the client using the URI supplied in the connect options. It can be specified as:
+
+    "mqtt://<host>:<port>"         - TCP, unsecure
+     "tcp://<host>:<port>"           (same)
+
+    "mqtts://<host>:<port>"        - SSL/TLS
+     "ssl://<host>:<port>"           (same)
+
+    "unix:///path/to/socket        - UNIX-domain socket (*nix systems only)
+
+    "ws://<host>:<port>[/path]"    - Websockets, unsecure
+    "wss://<host>:<port>[/path]"   - Websockets, secure
+
+The "mqtt://" and "tcp://" schemas are identical. They indicate an insecure connection over TCP. The "mqtt://" variation is new for the library, but becoming more common across different MQTT libraries.
+
+Similarly, the "mqtts://" and "ssl://" schemas are identical. They specify a secure connection over SSL/TLS sockets. The use any of the secure connect options requires that you compile the library with the `PAHO_WITH_SSL=TRUE` CMake option to include OpenSSL. In addition, you _must_ specify `ssl_options` when you connect to the broker - i.e. you must add an instance of `ssl_options` to the `connect_options` when calling `connect()`.
+
+The use of Unix-domain sockets requires the build option of `PAHO_WITH_UNIX_SOCKETS=TRUE` is required. This is only available on *nix-style systems like Linux and macOS. It is not vailable on Windows.
 
 ## Runtime tracing
 
@@ -65,13 +86,13 @@ export MQTT_C_CLIENT_TRACE_LEVEL=PROTOCOL
 
 ## Reporting bugs
 
-Please open issues in the Github project: https://github.com/eclipse/paho.mqtt.c/issues.
+Please open issues in the Github project: https://github.com/eclipse-paho/paho.mqtt.c/issues.
 
 ## More information
 
 Discussion of the Paho clients takes place on the [Eclipse paho-dev mailing list](https://dev.eclipse.org/mailman/listinfo/paho-dev).
 
-Follow Eclipse Paho on Twitter: [@eclipsepaho](https://twitter.com/eclipsepaho)
+## Follow Eclipse Paho on Twitter: [@eclipsepaho](https://twitter.com/eclipsepaho)
 
 General questions about the MQTT protocol are discussed in the [MQTT Google Group](https://groups.google.com/forum/?hl=en-US&fromgroups#!forum/mqtt).
 
@@ -161,8 +182,11 @@ Variable | Default Value | Description
 PAHO_BUILD_SHARED | TRUE | Build a shared version of the libraries
 PAHO_BUILD_STATIC | FALSE | Build a static version of the libraries
 PAHO_HIGH_PERFORMANCE | FALSE | When set to true, the debugging aids internal tracing and heap tracking are not included.
-PAHO_WITH_SSL | FALSE | Flag that defines whether to build ssl-enabled binaries too. 
+PAHO_WITH_SSL | FALSE | Flag that defines whether to build ssl-enabled binaries too.
 OPENSSL_ROOT_DIR | "" (system default) | Directory containing your OpenSSL installation (i.e. `/usr/local` when headers are in `/usr/local/include` and libraries are in `/usr/local/lib`)
+PAHO_WITH_LIBRESSL | FALSE | Flag that defines whether to build ssl-enabled binaries with LibreSSL instead of OpenSSL.  
+LIBRESSL_ROOT_DIR | "" (system default) | Directory containing your LibreSSL installation (i.e. `/usr/local` when headers are in `/usr/local/include` and libraries are in `/usr/local/lib`)
+PAHO_WITH_UNIX_SOCKETS | FALSE | (*nix systems only) Flag to enable support for UNIX-domain sockets
 PAHO_BUILD_DOCUMENTATION | FALSE | Create and install the HTML based API documentation (requires Doxygen)
 PAHO_BUILD_SAMPLES | FALSE | Build sample programs
 PAHO_ENABLE_TESTING | TRUE | Build test and run
@@ -220,7 +244,7 @@ $ ctest -VV
 
 ### Cross compilation
 
-Cross compilation using CMake is performed by using so called "toolchain files" (see: http://www.vtk.org/Wiki/CMake_Cross_Compiling).
+Cross compilation using CMake is performed by using so called "toolchain files" (see: https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html).
 
 The path to the toolchain file can be specified by using CMake's `-DCMAKE_TOOLCHAIN_FILE` option. In case no toolchain file is specified, the build is performed for the native build platform.
 
@@ -331,5 +355,4 @@ As is normal for C programs on Windows, the calling convention is __cdecl.  See 
 https://docs.microsoft.com/en-us/cpp/cpp/cdecl?view=vs-2019
 
 If you call this library from another language, you may need to take this into account.
-
 

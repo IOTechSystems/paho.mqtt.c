@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2023 IBM Corp.
+ * Copyright (c) 2009, 2024 IBM Corp.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -38,7 +38,7 @@
 #include <time.h>
 #include <string.h>
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 #include <syslog.h>
 #include <sys/stat.h>
 #define GETTIMEOFDAY 1
@@ -52,7 +52,7 @@
 	#include <sys/timeb.h>
 #endif
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 /**
  * _unlink mapping for linux
  */
@@ -84,7 +84,6 @@ typedef struct
 #else
 	struct timeb ts;
 #endif
-	int sametime_count;
 	int number;
 	thread_id_type thread_id;
 	int depth;
@@ -117,15 +116,14 @@ static FILE* Log_destToFile(const char *dest);
 static int Log_compareEntries(const char *entry1, const char *entry2);
 #endif
 
-static int sametime_count = 0;
 #if defined(GETTIMEOFDAY)
-struct timeval now_ts, last_ts;
+struct timeval now_ts;
 #else
-struct timeb now_ts, last_ts;
+struct timeb now_ts;
 #endif
 static char msg_buf[512];
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 mutex_type log_mutex;
 #else
 static pthread_mutex_t log_mutex_store = PTHREAD_MUTEX_INITIALIZER;
@@ -137,7 +135,7 @@ int Log_initialize(Log_nameValue* info)
 {
 	int rc = SOCKET_ERROR;
 	char* envval = NULL;
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 	struct stat buf;
 #endif
 
@@ -200,7 +198,7 @@ int Log_initialize(Log_nameValue* info)
 			info++;
 		}
 	}
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 	if (stat("/proc/version", &buf) != -1)
 	{
 		FILE* vfile;
@@ -259,7 +257,6 @@ void Log_terminate(void)
 	start_index = -1;
 	next_index = 0;
 	trace_output_level = INVALID_LEVEL;
-	sametime_count = 0;
 }
 
 
@@ -267,21 +264,11 @@ static traceEntry* Log_pretrace(void)
 {
 	traceEntry *cur_entry = NULL;
 
-	/* calling ftime/gettimeofday seems to be comparatively expensive, so we need to limit its use */
-	if (++sametime_count % 20 == 0)
-	{
 #if defined(GETTIMEOFDAY)
-		gettimeofday(&now_ts, NULL);
-		if (now_ts.tv_sec != last_ts.tv_sec || now_ts.tv_usec != last_ts.tv_usec)
+	gettimeofday(&now_ts, NULL);
 #else
-		ftime(&now_ts);
-		if (now_ts.time != last_ts.time || now_ts.millitm != last_ts.millitm)
+	ftime(&now_ts);
 #endif
-		{
-			sametime_count = 0;
-			last_ts = now_ts;
-		}
-	}
 
 	if (trace_queue_size != trace_settings.max_trace_entries)
 	{
@@ -333,8 +320,6 @@ static char* Log_formatTraceEntry(traceEntry* cur_entry)
 	snprintf(&msg_buf[22], sizeof(msg_buf)-22, ".%.3hu ", cur_entry->ts.millitm);
 #endif
 	buf_pos = 27;
-
-	snprintf(msg_buf, sizeof(msg_buf), "(%.4d)", cur_entry->sametime_count);
 	msg_buf[6] = ' ';
 
 	if (cur_entry->has_rc == 2)
@@ -403,8 +388,6 @@ static void Log_trace(enum LOG_LEVELS log_level, const char *buf)
 	cur_entry = Log_pretrace();
 
 	memcpy(&(cur_entry->ts), &now_ts, sizeof(now_ts));
-	cur_entry->sametime_count = sametime_count;
-
 	cur_entry->has_rc = 2;
 	strncpy(cur_entry->name, buf, sizeof(cur_entry->name));
 	cur_entry->name[MAX_FUNCTION_NAME_LENGTH] = '\0';
@@ -467,7 +450,6 @@ void Log_stackTrace(enum LOG_LEVELS log_level, int msgno, thread_id_type thread_
 	cur_entry = Log_pretrace();
 
 	memcpy(&(cur_entry->ts), &now_ts, sizeof(now_ts));
-	cur_entry->sametime_count = sametime_count;
 	cur_entry->number = msgno;
 	cur_entry->thread_id = thread_id;
 	cur_entry->depth = current_depth;

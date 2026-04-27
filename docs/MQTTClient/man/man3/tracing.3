@@ -1,17 +1,23 @@
-.TH "tracing" 3 "Fri Oct 13 2023" "Paho MQTT C Client Library" \" -*- nroff -*-
+.TH "tracing" 3 "Fri Feb 20 2026 15:12:33" "Paho MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 tracing \- Tracing 
+.PP
 Runtime tracing is controlled by environment variables\&.
+
 .PP
 Tracing is switched on by setting MQTT_C_CLIENT_TRACE\&. A value of ON, or stdout, prints to stdout, any other value is interpreted as a file name to use\&.
+
 .PP
 The amount of trace detail is controlled with the MQTT_C_CLIENT_TRACE_LEVEL environment variable - valid values are ERROR, PROTOCOL, MINIMUM, MEDIUM and MAXIMUM (from least to most verbose)\&.
+
 .PP
 The variable MQTT_C_CLIENT_TRACE_MAX_LINES limits the number of lines of trace that are output to a file\&. Two files are used at most, when they are full, the last one is overwritten with the new trace entries\&. The default size is 1000 lines\&.
+
 .PP
 .SS "MQTT Packet Tracing"
+
 .PP
 A feature that can be very useful is printing the MQTT packets that are sent and received\&. To achieve this, use the following environment variable settings: 
 .PP
@@ -24,11 +30,11 @@ MQTT_C_CLIENT_TRACE_LEVEL=PROTOCOL
  The output you should see looks like this: 
 .PP
 .nf
-20130528 155936\&.813 3 stdout-subscriber -> CONNECT cleansession: 1 (0)
-20130528 155936\&.813 3 stdout-subscriber <- CONNACK rc: 0
-20130528 155936\&.813 3 stdout-subscriber -> SUBSCRIBE msgid: 1 (0)
-20130528 155936\&.813 3 stdout-subscriber <- SUBACK msgid: 1
-20130528 155941\&.818 3 stdout-subscriber -> DISCONNECT (0)
+20130528 155936\&.813 3 stdout\-subscriber \-> CONNECT cleansession: 1 (0)
+20130528 155936\&.813 3 stdout\-subscriber <\- CONNACK rc: 0
+20130528 155936\&.813 3 stdout\-subscriber \-> SUBSCRIBE msgid: 1 (0)
+20130528 155936\&.813 3 stdout\-subscriber <\- SUBACK msgid: 1
+20130528 155941\&.818 3 stdout\-subscriber \-> DISCONNECT (0)
 
 .fi
 .PP
@@ -46,8 +52,10 @@ direction (-> from client to server, <- from server to client)
 .IP "6." 4
 packet details
 .PP
+
 .PP
 .SS "Default Level Tracing"
+
 .PP
 This is an extract of a default level trace of a call to connect: 
 .PP
@@ -88,8 +96,10 @@ function name : line of source code file
 .IP "7." 4
 return value (if there is one)
 .PP
+
 .PP
 .SS "Memory Allocation Tracing"
+
 .PP
 Setting the trace level to maximum causes memory allocations and frees to be traced along with the default trace entries, with messages like the following: 
 .PP
@@ -111,4 +121,6 @@ Setting the trace level to maximum causes memory allocations and frees to be tra
 
 .fi
 .PP
- 
+
+.PP
+√* 

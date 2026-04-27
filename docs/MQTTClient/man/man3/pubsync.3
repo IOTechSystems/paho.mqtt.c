@@ -1,8 +1,9 @@
-.TH "pubsync" 3 "Fri Oct 13 2023" "Paho MQTT C Client Library" \" -*- nroff -*-
+.TH "pubsync" 3 "Fri Feb 20 2026 15:12:33" "Paho MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 pubsync \- Synchronous publication example 
+.PP
 
 .PP
 .nf
@@ -11,7 +12,7 @@ pubsync \- Synchronous publication example
 #include <string\&.h>
 #include "MQTTClient\&.h"
 
-#define ADDRESS     "tcp://mqtt\&.eclipseprojects\&.io:1883"
+#define ADDRESS     "tcp://test\&.mosquitto\&.org:1883"
 #define CLIENTID    "ExampleClientPub"
 #define TOPIC       "MQTT Examples"
 #define PAYLOAD     "Hello World!"
@@ -29,7 +30,7 @@ int main(int argc, char* argv[])
     if ((rc = MQTTClient_create(&client, ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL)) != MQTTCLIENT_SUCCESS)
     {
-         printf("Failed to create client, return code %d\n", rc);
+         printf("Failed to create client, return code %d\\n", rc);
          exit(EXIT_FAILURE);
     }
 
@@ -37,7 +38,7 @@ int main(int argc, char* argv[])
     conn_opts\&.cleansession = 1;
     if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
     {
-        printf("Failed to connect, return code %d\n", rc);
+        printf("Failed to connect, return code %d\\n", rc);
         exit(EXIT_FAILURE);
     }
 
@@ -47,18 +48,18 @@ int main(int argc, char* argv[])
     pubmsg\&.retained = 0;
     if ((rc = MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token)) != MQTTCLIENT_SUCCESS)
     {
-         printf("Failed to publish message, return code %d\n", rc);
+         printf("Failed to publish message, return code %d\\n", rc);
          exit(EXIT_FAILURE);
     }
 
-    printf("Waiting for up to %d seconds for publication of %s\n"
-            "on topic %s for client with ClientID: %s\n",
+    printf("Waiting for up to %d seconds for publication of %s\\n"
+            "on topic %s for client with ClientID: %s\\n",
             (int)(TIMEOUT/1000), PAYLOAD, TOPIC, CLIENTID);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    printf("Message with delivery token %d delivered\n", token);
+    printf("Message with delivery token %d delivered\\n", token);
 
     if ((rc = MQTTClient_disconnect(client, 10000)) != MQTTCLIENT_SUCCESS)
-        printf("Failed to disconnect, return code %d\n", rc);
+        printf("Failed to disconnect, return code %d\\n", rc);
     MQTTClient_destroy(&client);
     return rc;
 }

@@ -1,4 +1,4 @@
-.TH "MQTTClientPersistence.h" 3 "Fri Oct 13 2023" "Paho MQTT C Client Library" \" -*- nroff -*-
+.TH "MQTTClientPersistence.h" 3 "Fri Feb 20 2026 15:12:33" "Paho MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -78,12 +78,16 @@ MQTTClientPersistence.h \- This structure represents a persistent data store, us
 This structure represents a persistent data store, used to store outbound and inbound messages, in order to achieve reliable messaging\&. 
 
 The MQTT Client persists QoS1 and QoS2 messages in order to meet the assurances of delivery associated with these \fBQuality of service\fP levels\&. The messages are saved in persistent storage The type and context of the persistence implementation are specified when the MQTT client is created (see \fBMQTTClient_create()\fP)\&. The default persistence type (\fBMQTTCLIENT_PERSISTENCE_DEFAULT\fP) uses a file system-based persistence mechanism\&. The \fIpersistence_context\fP argument passed to \fBMQTTClient_create()\fP when using the default peristence is a string representing the location of the persistence directory\&. If the context argument is NULL, the working directory will be used\&.
+
 .PP
 To use memory-based persistence, an application passes \fBMQTTCLIENT_PERSISTENCE_NONE\fP as the \fIpersistence_type\fP to \fBMQTTClient_create()\fP\&. This can lead to message loss in certain situations, but can be appropriate in some cases (see \fBQuality of service\fP)\&.
+
 .PP
 Client applications can provide their own persistence mechanism by passing \fBMQTTCLIENT_PERSISTENCE_USER\fP as the \fIpersistence_type\fP\&. To implement a custom persistence mechanism, the application must pass an initialized \fBMQTTClient_persistence\fP structure as the \fIpersistence_context\fP argument to \fBMQTTClient_create()\fP\&.
+
 .PP
 If the functions defined return an \fBMQTTCLIENT_PERSISTENCE_ERROR\fP then the state of the persisted data should remain as it was prior to the function being called\&. For example, if \fBPersistence_put()\fP returns \fBMQTTCLIENT_PERSISTENCE_ERROR\fP, then it is assumed tha tthe persistent store does not contain the data that was passed to the function\&. Similarly, if \fBPersistence_remove()\fP returns \fBMQTTCLIENT_PERSISTENCE_ERROR\fP then it is assumed that the data to be removed is still held in the persistent store\&.
+
 .PP
 It is up to the persistence implementation to log any error information that may be required to diagnose a persistence mechanism failure\&. 
 .SH "Macro Definition Documentation"
@@ -102,8 +106,10 @@ Application-specific persistence functions must return this error code if there 
 
 .PP
 Initialize the persistent store\&. Either open the existing persistent store for this client ID or create a new one if one doesn't exist\&. If the persistent store is already open, return without taking any action\&.
+
 .PP
 An application can use the same client identifier to connect to many different servers\&. The \fIclientid\fP in conjunction with the \fIserverURI\fP uniquely identifies the persistence store required\&.
+
 .PP
 \fBParameters\fP
 .RS 4

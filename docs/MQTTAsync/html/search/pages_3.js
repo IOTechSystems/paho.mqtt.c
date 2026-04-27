@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['quality_20of_20service_704',['Quality of service',['../qos.html',1,'']]]
+  ['example_0',['example',['../publish.html',1,'Publication example'],['../subscribe.html',1,'Subscription example']]]
 ];

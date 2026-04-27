@@ -1,4 +1,4 @@
-.TH "MQTTProperties.h" 3 "Fri Oct 13 2023" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
+.TH "MQTTProperties.h" 3 "Fri Feb 20 2026 15:12:33" "Paho Asynchronous MQTT C Client Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -6,7 +6,9 @@ MQTTProperties.h
 .SH SYNOPSIS
 .br
 .PP
-\fC#include 'MQTTExportDeclarations\&.h'\fP
+\fR#include 'MQTTExportDeclarations\&.h'\fP
+.br
+\fR#include <stdint\&.h>\fP
 .br
 
 .SS "Data Structures"
@@ -36,14 +38,14 @@ MQTTProperties.h
 
 .in +1c
 .ti -1c
-.RI "typedef struct \fBMQTTProperties\fP \fBMQTTProperties\fP"
+.RI "typedef struct MQTTProperties \fBMQTTProperties\fP"
 .br
 .in -1c
 .SS "Enumerations"
 
 .in +1c
 .ti -1c
-.RI "enum \fBMQTTPropertyCodes\fP { \fBMQTTPROPERTY_CODE_PAYLOAD_FORMAT_INDICATOR\fP = 1, \fBMQTTPROPERTY_CODE_MESSAGE_EXPIRY_INTERVAL\fP = 2, \fBMQTTPROPERTY_CODE_CONTENT_TYPE\fP = 3, \fBMQTTPROPERTY_CODE_RESPONSE_TOPIC\fP = 8, \fBMQTTPROPERTY_CODE_CORRELATION_DATA\fP = 9, \fBMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER\fP = 11, \fBMQTTPROPERTY_CODE_SESSION_EXPIRY_INTERVAL\fP = 17, \fBMQTTPROPERTY_CODE_ASSIGNED_CLIENT_IDENTIFER\fP = 18, \fBMQTTPROPERTY_CODE_SERVER_KEEP_ALIVE\fP = 19, \fBMQTTPROPERTY_CODE_AUTHENTICATION_METHOD\fP = 21, \fBMQTTPROPERTY_CODE_AUTHENTICATION_DATA\fP = 22, \fBMQTTPROPERTY_CODE_REQUEST_PROBLEM_INFORMATION\fP = 23, \fBMQTTPROPERTY_CODE_WILL_DELAY_INTERVAL\fP = 24, \fBMQTTPROPERTY_CODE_REQUEST_RESPONSE_INFORMATION\fP = 25, \fBMQTTPROPERTY_CODE_RESPONSE_INFORMATION\fP = 26, \fBMQTTPROPERTY_CODE_SERVER_REFERENCE\fP = 28, \fBMQTTPROPERTY_CODE_REASON_STRING\fP = 31, \fBMQTTPROPERTY_CODE_RECEIVE_MAXIMUM\fP = 33, \fBMQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM\fP = 34, \fBMQTTPROPERTY_CODE_TOPIC_ALIAS\fP = 35, \fBMQTTPROPERTY_CODE_MAXIMUM_QOS\fP = 36, \fBMQTTPROPERTY_CODE_RETAIN_AVAILABLE\fP = 37, \fBMQTTPROPERTY_CODE_USER_PROPERTY\fP = 38, \fBMQTTPROPERTY_CODE_MAXIMUM_PACKET_SIZE\fP = 39, \fBMQTTPROPERTY_CODE_WILDCARD_SUBSCRIPTION_AVAILABLE\fP = 40, \fBMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE\fP = 41, \fBMQTTPROPERTY_CODE_SHARED_SUBSCRIPTION_AVAILABLE\fP = 42 }"
+.RI "enum \fBMQTTPropertyCodes\fP { \fBMQTTPROPERTY_CODE_PAYLOAD_FORMAT_INDICATOR\fP = 1, \fBMQTTPROPERTY_CODE_MESSAGE_EXPIRY_INTERVAL\fP = 2, \fBMQTTPROPERTY_CODE_CONTENT_TYPE\fP = 3, \fBMQTTPROPERTY_CODE_RESPONSE_TOPIC\fP = 8, \fBMQTTPROPERTY_CODE_CORRELATION_DATA\fP = 9, \fBMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER\fP = 11, \fBMQTTPROPERTY_CODE_SESSION_EXPIRY_INTERVAL\fP = 17, \fBMQTTPROPERTY_CODE_ASSIGNED_CLIENT_IDENTIFIER\fP = 18, \fBMQTTPROPERTY_CODE_ASSIGNED_CLIENT_IDENTIFER\fP = 18, \fBMQTTPROPERTY_CODE_SERVER_KEEP_ALIVE\fP = 19, \fBMQTTPROPERTY_CODE_AUTHENTICATION_METHOD\fP = 21, \fBMQTTPROPERTY_CODE_AUTHENTICATION_DATA\fP = 22, \fBMQTTPROPERTY_CODE_REQUEST_PROBLEM_INFORMATION\fP = 23, \fBMQTTPROPERTY_CODE_WILL_DELAY_INTERVAL\fP = 24, \fBMQTTPROPERTY_CODE_REQUEST_RESPONSE_INFORMATION\fP = 25, \fBMQTTPROPERTY_CODE_RESPONSE_INFORMATION\fP = 26, \fBMQTTPROPERTY_CODE_SERVER_REFERENCE\fP = 28, \fBMQTTPROPERTY_CODE_REASON_STRING\fP = 31, \fBMQTTPROPERTY_CODE_RECEIVE_MAXIMUM\fP = 33, \fBMQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM\fP = 34, \fBMQTTPROPERTY_CODE_TOPIC_ALIAS\fP = 35, \fBMQTTPROPERTY_CODE_MAXIMUM_QOS\fP = 36, \fBMQTTPROPERTY_CODE_RETAIN_AVAILABLE\fP = 37, \fBMQTTPROPERTY_CODE_USER_PROPERTY\fP = 38, \fBMQTTPROPERTY_CODE_MAXIMUM_PACKET_SIZE\fP = 39, \fBMQTTPROPERTY_CODE_WILDCARD_SUBSCRIPTION_AVAILABLE\fP = 40, \fBMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE\fP = 41, \fBMQTTPROPERTY_CODE_SHARED_SUBSCRIPTION_AVAILABLE\fP = 42 }"
 .br
 .ti -1c
 .RI "enum \fBMQTTPropertyTypes\fP { \fBMQTTPROPERTY_TYPE_BYTE\fP, \fBMQTTPROPERTY_TYPE_TWO_BYTE_INTEGER\fP, \fBMQTTPROPERTY_TYPE_FOUR_BYTE_INTEGER\fP, \fBMQTTPROPERTY_TYPE_VARIABLE_BYTE_INTEGER\fP, \fBMQTTPROPERTY_TYPE_BINARY_DATA\fP, \fBMQTTPROPERTY_TYPE_UTF_8_ENCODED_STRING\fP, \fBMQTTPROPERTY_TYPE_UTF_8_STRING_PAIR\fP }"
@@ -59,7 +61,7 @@ MQTTProperties.h
 .RI "int \fBMQTTProperty_getType\fP (enum \fBMQTTPropertyCodes\fP value)"
 .br
 .ti -1c
-.RI "int \fBMQTTProperties_len\fP (\fBMQTTProperties\fP *props)"
+.RI "int \fBMQTTProperties_len\fP (const \fBMQTTProperties\fP *props)"
 .br
 .ti -1c
 .RI "int \fBMQTTProperties_add\fP (\fBMQTTProperties\fP *props, const \fBMQTTProperty\fP *prop)"
@@ -77,22 +79,22 @@ MQTTProperties.h
 .RI "\fBMQTTProperties\fP \fBMQTTProperties_copy\fP (const \fBMQTTProperties\fP *props)"
 .br
 .ti -1c
-.RI "int \fBMQTTProperties_hasProperty\fP (\fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
+.RI "int \fBMQTTProperties_hasProperty\fP (const \fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
 .br
 .ti -1c
-.RI "int \fBMQTTProperties_propertyCount\fP (\fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
+.RI "int \fBMQTTProperties_propertyCount\fP (const \fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
 .br
 .ti -1c
-.RI "int \fBMQTTProperties_getNumericValue\fP (\fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
+.RI "int64_t \fBMQTTProperties_getNumericValue\fP (const \fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
 .br
 .ti -1c
-.RI "int \fBMQTTProperties_getNumericValueAt\fP (\fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid, int index)"
+.RI "int64_t \fBMQTTProperties_getNumericValueAt\fP (const \fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid, int index)"
 .br
 .ti -1c
-.RI "\fBMQTTProperty\fP * \fBMQTTProperties_getProperty\fP (\fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
+.RI "\fBMQTTProperty\fP * \fBMQTTProperties_getProperty\fP (const \fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid)"
 .br
 .ti -1c
-.RI "\fBMQTTProperty\fP * \fBMQTTProperties_getPropertyAt\fP (\fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid, int index)"
+.RI "\fBMQTTProperty\fP * \fBMQTTProperties_getPropertyAt\fP (const \fBMQTTProperties\fP *props, enum \fBMQTTPropertyCodes\fP propid, int index)"
 .br
 .in -1c
 .SH "Macro Definition Documentation"
@@ -103,7 +105,7 @@ MQTTProperties.h
 
 .SH "Typedef Documentation"
 .PP 
-.SS "typedef struct \fBMQTTProperties\fP \fBMQTTProperties\fP"
+.SS "typedef struct MQTTProperties MQTTProperties"
 MQTT version 5 property list 
 .SH "Enumeration Type Documentation"
 .PP 
@@ -113,85 +115,88 @@ The one byte MQTT V5 property indicator
 \fBEnumerator\fP
 .in +1c
 .TP
-\fB\fIMQTTPROPERTY_CODE_PAYLOAD_FORMAT_INDICATOR \fP\fP
+\f(BIMQTTPROPERTY_CODE_PAYLOAD_FORMAT_INDICATOR \fP
 The value is 1 
 .TP
-\fB\fIMQTTPROPERTY_CODE_MESSAGE_EXPIRY_INTERVAL \fP\fP
+\f(BIMQTTPROPERTY_CODE_MESSAGE_EXPIRY_INTERVAL \fP
 The value is 2 
 .TP
-\fB\fIMQTTPROPERTY_CODE_CONTENT_TYPE \fP\fP
+\f(BIMQTTPROPERTY_CODE_CONTENT_TYPE \fP
 The value is 3 
 .TP
-\fB\fIMQTTPROPERTY_CODE_RESPONSE_TOPIC \fP\fP
+\f(BIMQTTPROPERTY_CODE_RESPONSE_TOPIC \fP
 The value is 8 
 .TP
-\fB\fIMQTTPROPERTY_CODE_CORRELATION_DATA \fP\fP
+\f(BIMQTTPROPERTY_CODE_CORRELATION_DATA \fP
 The value is 9 
 .TP
-\fB\fIMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER \fP\fP
+\f(BIMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIER \fP
 The value is 11 
 .TP
-\fB\fIMQTTPROPERTY_CODE_SESSION_EXPIRY_INTERVAL \fP\fP
+\f(BIMQTTPROPERTY_CODE_SESSION_EXPIRY_INTERVAL \fP
 The value is 17 
 .TP
-\fB\fIMQTTPROPERTY_CODE_ASSIGNED_CLIENT_IDENTIFER \fP\fP
+\f(BIMQTTPROPERTY_CODE_ASSIGNED_CLIENT_IDENTIFIER \fP
 The value is 18 
 .TP
-\fB\fIMQTTPROPERTY_CODE_SERVER_KEEP_ALIVE \fP\fP
+\f(BIMQTTPROPERTY_CODE_ASSIGNED_CLIENT_IDENTIFER \fP
+The value is 18 (obsolete, misspelled) 
+.TP
+\f(BIMQTTPROPERTY_CODE_SERVER_KEEP_ALIVE \fP
 The value is 19 
 .TP
-\fB\fIMQTTPROPERTY_CODE_AUTHENTICATION_METHOD \fP\fP
+\f(BIMQTTPROPERTY_CODE_AUTHENTICATION_METHOD \fP
 The value is 21 
 .TP
-\fB\fIMQTTPROPERTY_CODE_AUTHENTICATION_DATA \fP\fP
+\f(BIMQTTPROPERTY_CODE_AUTHENTICATION_DATA \fP
 The value is 22 
 .TP
-\fB\fIMQTTPROPERTY_CODE_REQUEST_PROBLEM_INFORMATION \fP\fP
+\f(BIMQTTPROPERTY_CODE_REQUEST_PROBLEM_INFORMATION \fP
 The value is 23 
 .TP
-\fB\fIMQTTPROPERTY_CODE_WILL_DELAY_INTERVAL \fP\fP
+\f(BIMQTTPROPERTY_CODE_WILL_DELAY_INTERVAL \fP
 The value is 24 
 .TP
-\fB\fIMQTTPROPERTY_CODE_REQUEST_RESPONSE_INFORMATION \fP\fP
+\f(BIMQTTPROPERTY_CODE_REQUEST_RESPONSE_INFORMATION \fP
 The value is 25 
 .TP
-\fB\fIMQTTPROPERTY_CODE_RESPONSE_INFORMATION \fP\fP
+\f(BIMQTTPROPERTY_CODE_RESPONSE_INFORMATION \fP
 The value is 26 
 .TP
-\fB\fIMQTTPROPERTY_CODE_SERVER_REFERENCE \fP\fP
+\f(BIMQTTPROPERTY_CODE_SERVER_REFERENCE \fP
 The value is 28 
 .TP
-\fB\fIMQTTPROPERTY_CODE_REASON_STRING \fP\fP
+\f(BIMQTTPROPERTY_CODE_REASON_STRING \fP
 The value is 31 
 .TP
-\fB\fIMQTTPROPERTY_CODE_RECEIVE_MAXIMUM \fP\fP
+\f(BIMQTTPROPERTY_CODE_RECEIVE_MAXIMUM \fP
 The value is 33 
 .TP
-\fB\fIMQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM \fP\fP
+\f(BIMQTTPROPERTY_CODE_TOPIC_ALIAS_MAXIMUM \fP
 The value is 34 
 .TP
-\fB\fIMQTTPROPERTY_CODE_TOPIC_ALIAS \fP\fP
+\f(BIMQTTPROPERTY_CODE_TOPIC_ALIAS \fP
 The value is 35 
 .TP
-\fB\fIMQTTPROPERTY_CODE_MAXIMUM_QOS \fP\fP
+\f(BIMQTTPROPERTY_CODE_MAXIMUM_QOS \fP
 The value is 36 
 .TP
-\fB\fIMQTTPROPERTY_CODE_RETAIN_AVAILABLE \fP\fP
+\f(BIMQTTPROPERTY_CODE_RETAIN_AVAILABLE \fP
 The value is 37 
 .TP
-\fB\fIMQTTPROPERTY_CODE_USER_PROPERTY \fP\fP
+\f(BIMQTTPROPERTY_CODE_USER_PROPERTY \fP
 The value is 38 
 .TP
-\fB\fIMQTTPROPERTY_CODE_MAXIMUM_PACKET_SIZE \fP\fP
+\f(BIMQTTPROPERTY_CODE_MAXIMUM_PACKET_SIZE \fP
 The value is 39 
 .TP
-\fB\fIMQTTPROPERTY_CODE_WILDCARD_SUBSCRIPTION_AVAILABLE \fP\fP
+\f(BIMQTTPROPERTY_CODE_WILDCARD_SUBSCRIPTION_AVAILABLE \fP
 The value is 40 
 .TP
-\fB\fIMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE \fP\fP
+\f(BIMQTTPROPERTY_CODE_SUBSCRIPTION_IDENTIFIERS_AVAILABLE \fP
 The value is 41 
 .TP
-\fB\fIMQTTPROPERTY_CODE_SHARED_SUBSCRIPTION_AVAILABLE \fP\fP
+\f(BIMQTTPROPERTY_CODE_SHARED_SUBSCRIPTION_AVAILABLE \fP
 The value is 241 
 .SS "enum \fBMQTTPropertyTypes\fP"
 The one byte MQTT V5 property type 
@@ -199,22 +204,22 @@ The one byte MQTT V5 property type
 \fBEnumerator\fP
 .in +1c
 .TP
-\fB\fIMQTTPROPERTY_TYPE_BYTE \fP\fP
+\f(BIMQTTPROPERTY_TYPE_BYTE \fP
 .TP
-\fB\fIMQTTPROPERTY_TYPE_TWO_BYTE_INTEGER \fP\fP
+\f(BIMQTTPROPERTY_TYPE_TWO_BYTE_INTEGER \fP
 .TP
-\fB\fIMQTTPROPERTY_TYPE_FOUR_BYTE_INTEGER \fP\fP
+\f(BIMQTTPROPERTY_TYPE_FOUR_BYTE_INTEGER \fP
 .TP
-\fB\fIMQTTPROPERTY_TYPE_VARIABLE_BYTE_INTEGER \fP\fP
+\f(BIMQTTPROPERTY_TYPE_VARIABLE_BYTE_INTEGER \fP
 .TP
-\fB\fIMQTTPROPERTY_TYPE_BINARY_DATA \fP\fP
+\f(BIMQTTPROPERTY_TYPE_BINARY_DATA \fP
 .TP
-\fB\fIMQTTPROPERTY_TYPE_UTF_8_ENCODED_STRING \fP\fP
+\f(BIMQTTPROPERTY_TYPE_UTF_8_ENCODED_STRING \fP
 .TP
-\fB\fIMQTTPROPERTY_TYPE_UTF_8_STRING_PAIR \fP\fP
+\f(BIMQTTPROPERTY_TYPE_UTF_8_STRING_PAIR \fP
 .SH "Function Documentation"
 .PP 
-.SS "const char* MQTTPropertyName (enum \fBMQTTPropertyCodes\fP value)"
+.SS "const char * MQTTPropertyName (enum \fBMQTTPropertyCodes\fP value)\fR [extern]\fP"
 Returns a printable string description of an MQTT V5 property code\&. 
 .PP
 \fBParameters\fP
@@ -228,7 +233,7 @@ the printable string description of the input property code\&. NULL if the code 
 .RE
 .PP
 
-.SS "int MQTTProperty_getType (enum \fBMQTTPropertyCodes\fP value)"
+.SS "int MQTTProperty_getType (enum \fBMQTTPropertyCodes\fP value)\fR [extern]\fP"
 Returns the MQTT V5 type code of an MQTT V5 property\&. 
 .PP
 \fBParameters\fP
@@ -242,7 +247,7 @@ the MQTT V5 type code of the input property\&. -1 if the code was not found\&.
 .RE
 .PP
 
-.SS "int MQTTProperties_len (\fBMQTTProperties\fP * props)"
+.SS "int MQTTProperties_len (const \fBMQTTProperties\fP * props)"
 Returns the length of the properties structure when serialized ready for network transmission\&. 
 .PP
 \fBParameters\fP
@@ -256,7 +261,7 @@ the length in bytes of the properties when serialized\&.
 .RE
 .PP
 
-.SS "int MQTTProperties_add (\fBMQTTProperties\fP * props, const \fBMQTTProperty\fP * prop)"
+.SS "int MQTTProperties_add (\fBMQTTProperties\fP * props, const \fBMQTTProperty\fP * prop)\fR [extern]\fP"
 Add a property pointer to the property array\&. Memory is allocated in this function, so MQTTClient_create or MQTTAsync_create must be called first to initialize the internal heap tracking\&. Alternatively \fBMQTTAsync_global_init()\fP can be called first or build with the HIGH_PERFORMANCE option which disables the heap tracking\&. 
 .PP
 \fBParameters\fP
@@ -306,7 +311,7 @@ Reads a property list from a character buffer into an array\&.
 .RE
 .PP
 
-.SS "void MQTTProperties_free (\fBMQTTProperties\fP * properties)"
+.SS "void MQTTProperties_free (\fBMQTTProperties\fP * properties)\fR [extern]\fP"
 Free all memory allocated to the property list, including any to individual properties\&. 
 .PP
 \fBParameters\fP
@@ -315,7 +320,7 @@ Free all memory allocated to the property list, including any to individual prop
 .RE
 .PP
 
-.SS "\fBMQTTProperties\fP MQTTProperties_copy (const \fBMQTTProperties\fP * props)"
+.SS "\fBMQTTProperties\fP MQTTProperties_copy (const \fBMQTTProperties\fP * props)\fR [extern]\fP"
 Copy the contents of a property list, allocating additional memory if needed\&. 
 .PP
 \fBParameters\fP
@@ -329,7 +334,7 @@ the duplicated property list\&.
 .RE
 .PP
 
-.SS "int MQTTProperties_hasProperty (\fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)"
+.SS "int MQTTProperties_hasProperty (const \fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)\fR [extern]\fP"
 Checks if property list contains a specific property\&. 
 .PP
 \fBParameters\fP
@@ -345,7 +350,7 @@ Checks if property list contains a specific property\&.
 .RE
 .PP
 
-.SS "int MQTTProperties_propertyCount (\fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)"
+.SS "int MQTTProperties_propertyCount (const \fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)\fR [extern]\fP"
 Returns the number of instances of a property id\&. Most properties can exist only once\&. User properties and subscription ids can exist more than once\&. 
 .PP
 \fBParameters\fP
@@ -361,7 +366,7 @@ the number of times found\&. Can be 0\&.
 .RE
 .PP
 
-.SS "int MQTTProperties_getNumericValue (\fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)"
+.SS "int64_t MQTTProperties_getNumericValue (const \fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)\fR [extern]\fP"
 Returns the integer value of a specific property\&. The property given must be a numeric type\&. 
 .PP
 \fBParameters\fP
@@ -377,7 +382,7 @@ the integer value of the property\&. -9999999 on failure\&.
 .RE
 .PP
 
-.SS "int MQTTProperties_getNumericValueAt (\fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid, int index)"
+.SS "int64_t MQTTProperties_getNumericValueAt (const \fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid, int index)\fR [extern]\fP"
 Returns the integer value of a specific property when it's not the only instance\&. The property given must be a numeric type\&. 
 .PP
 \fBParameters\fP
@@ -395,7 +400,7 @@ the integer value of the property\&. -9999999 on failure\&.
 .RE
 .PP
 
-.SS "\fBMQTTProperty\fP* MQTTProperties_getProperty (\fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)"
+.SS "\fBMQTTProperty\fP * MQTTProperties_getProperty (const \fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid)\fR [extern]\fP"
 Returns a pointer to the property structure for a specific property\&. 
 .PP
 \fBParameters\fP
@@ -411,7 +416,7 @@ the pointer to the property structure if found\&. NULL if not found\&.
 .RE
 .PP
 
-.SS "\fBMQTTProperty\fP* MQTTProperties_getPropertyAt (\fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid, int index)"
+.SS "\fBMQTTProperty\fP * MQTTProperties_getPropertyAt (const \fBMQTTProperties\fP * props, enum \fBMQTTPropertyCodes\fP propid, int index)\fR [extern]\fP"
 Returns a pointer to the property structure for a specific property when it's not the only instance\&. 
 .PP
 \fBParameters\fP
