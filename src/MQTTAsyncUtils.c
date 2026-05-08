@@ -1745,7 +1745,7 @@ static void MQTTAsync_checkTimeouts(void)
 	FUNC_ENTRY;
 	MQTTAsync_lock_mutex(mqttasync_mutex);
 	now = MQTTTime_now();
-	if (MQTTTime_difftime(now, last) < (DIFF_TIME_TYPE)3000)
+	if (MQTTTime_difftime(now, last) < (DIFF_TIME_TYPE)50)
 		goto exit;
 	last = now;
 	while (ListNextElement(MQTTAsync_handles, &current))		/* for each client */
@@ -1872,7 +1872,7 @@ thread_return_type WINAPI MQTTAsync_sendThread(void* n)
 		}
 		if ((rc = Thread_wait_evt(send_evt, timeout)) != 0 && rc != ETIMEDOUT)
 			Log(LOG_ERROR, -1, "Error %d waiting for send event", rc);
-		timeout = 1000; /* 1 second for follow on waits */
+		timeout = 100; /* 100 ms for follow on waits */
 		MQTTAsync_checkTimeouts();
 	}
 	sendThread_state = STOPPING;
@@ -2090,7 +2090,7 @@ thread_return_type WINAPI MQTTAsync_receiveThread(void* n)
 
 		if (sock == 0)
 			continue;
-		timeout = 1000L;
+		timeout = 50L;
 
 		/* find client corresponding to socket */
 		if (ListFindItem(MQTTAsync_handles, &sock, clientSockCompare) == NULL)
