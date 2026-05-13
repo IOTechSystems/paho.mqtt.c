@@ -953,7 +953,10 @@ void MQTTAsync_startConnectRetry(MQTTAsyncs* m)
 		m->lastConnectionFailedTime = MQTTTime_start_clock();
 		if (m->retrying)
 		{
-			m->currentIntervalBase = min(m->currentIntervalBase * 2, m->maxRetryInterval);
+			int next_base = m->currentIntervalBase * 2;
+			if (next_base == 0 && m->startBackoffAfterFirstRetry)
+				next_base = 1;
+			m->currentIntervalBase = min(next_base, m->maxRetryInterval);
 		}
 		else
 		{

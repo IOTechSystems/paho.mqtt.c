@@ -1223,7 +1223,7 @@ typedef struct
 {
 	/** The eyecatcher for this structure.  must be MQTC. */
 	char struct_id[4];
-	/** The version number of this structure.  Must be 0, 1, 2, 3 4 5 6, 7 or 8.
+	/** The version number of this structure.  Must be 0, 1, 2, 3 4 5 6, 7, 8 or 9.
 	  * 0 signifies no SSL options and no serverURIs
 	  * 1 signifies no serverURIs
       * 2 signifies no MQTTVersion
@@ -1232,6 +1232,7 @@ typedef struct
       * 5 signifies no MQTTV5 properties
       * 6 signifies no HTTP headers option
       * 7 signifies no HTTP proxy and HTTPS proxy options
+      * 8 signifies no startBackoffAfterFirstRetry option
 	  */
 	int struct_version;
 	/** The "keep alive" interval, measured in seconds, defines the maximum time
@@ -1404,27 +1405,41 @@ typedef struct
 	 * HTTPS proxy setting. See ::MQTTAsync_connectOptions.httpProxy and the section @ref HTTP_proxies.
 	 */
 	const char* httpsProxy;
+	/**
+	 * When minRetryInterval is 0, the first automatic reconnect attempt fires
+	 * immediately but every subsequent doubling (0 * 2) also yields 0, which
+	 * produces a tight reconnect loop against the broker.
+	 *
+	 * Set this to 1 to keep the immediate first attempt but force the
+	 * exponential backoff to start at 1 second on the second attempt, so the
+	 * sequence becomes 0, ~1, ~2, ~4, ... up to maxRetryInterval (with the
+	 * usual ±20% jitter). When minRetryInterval is non-zero this option has
+	 * no effect. Default 0 (off) for backwards compatibility.
+	 *
+	 * Exists only if struct_version >= 9.
+	 */
+	int startBackoffAfterFirstRetry;
 } MQTTAsync_connectOptions;
 
 /** Initializer for connect options for MQTT 3.1.1 non-WebSocket connections */
-#define MQTTAsync_connectOptions_initializer { {'M', 'Q', 'T', 'C'}, 8, 60, 1, 65535, NULL, NULL, NULL, 30, 0,\
-NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_DEFAULT, 0, 1, 60, {0, NULL}, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+#define MQTTAsync_connectOptions_initializer { {'M', 'Q', 'T', 'C'}, 9, 60, 1, 65535, NULL, NULL, NULL, 30, 0,\
+NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_DEFAULT, 0, 1, 60, {0, NULL}, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0}
 
 /** Initializer for connect options for MQTT 5.0 non-WebSocket connections */
-#define MQTTAsync_connectOptions_initializer5 { {'M', 'Q', 'T', 'C'}, 8, 60, 0, 65535, NULL, NULL, NULL, 30, 0,\
-NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_5, 0, 1, 60, {0, NULL}, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+#define MQTTAsync_connectOptions_initializer5 { {'M', 'Q', 'T', 'C'}, 9, 60, 0, 65535, NULL, NULL, NULL, 30, 0,\
+NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_5, 0, 1, 60, {0, NULL}, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0}
 
 /** Initializer for connect options for MQTT 3.1.1 WebSockets connections.
   * The keepalive interval is set to 45 seconds to avoid webserver 60 second inactivity timeouts.
   */
-#define MQTTAsync_connectOptions_initializer_ws { {'M', 'Q', 'T', 'C'}, 8, 45, 1, 65535, NULL, NULL, NULL, 30, 0,\
-NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_DEFAULT, 0, 1, 60, {0, NULL}, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+#define MQTTAsync_connectOptions_initializer_ws { {'M', 'Q', 'T', 'C'}, 9, 45, 1, 65535, NULL, NULL, NULL, 30, 0,\
+NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_DEFAULT, 0, 1, 60, {0, NULL}, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0}
 
 /** Initializer for connect options for MQTT 5.0 WebSockets connections.
   * The keepalive interval is set to 45 seconds to avoid webserver 60 second inactivity timeouts.
   */
-#define MQTTAsync_connectOptions_initializer5_ws { {'M', 'Q', 'T', 'C'}, 8, 45, 0, 65535, NULL, NULL, NULL, 30, 0,\
-NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_5, 0, 1, 60, {0, NULL}, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+#define MQTTAsync_connectOptions_initializer5_ws { {'M', 'Q', 'T', 'C'}, 9, 45, 0, 65535, NULL, NULL, NULL, 30, 0,\
+NULL, NULL, NULL, NULL, 0, NULL, MQTTVERSION_5, 0, 1, 60, {0, NULL}, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0}
 
 
 /**
