@@ -132,6 +132,7 @@ typedef struct MQTTAsync_struct
 	int automaticReconnect;
 	int minRetryInterval;
 	int maxRetryInterval;
+	int startBackoffAfterFirstRetry;
 	int serverURIcount;
 	char** serverURIs;
 	int connectTimeout;
