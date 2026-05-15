@@ -592,7 +592,6 @@ int MQTTAsync_connect(MQTTAsync handle, const MQTTAsync_connectOptions* options)
 		for (i = 0; i < options->serverURIcount; i++)
 		{
 			char* serverURI = options->serverURIs[i];
-			printf("checking %s\n", serverURI);
 			if (strncmp(URI_SSL, serverURI, strlen(URI_SSL)) == 0 ||
 				strncmp(URI_TLS, serverURI, strlen(URI_TLS)) == 0 ||
 				strncmp(URI_MQTTS, serverURI, strlen(URI_MQTTS)) == 0 ||
