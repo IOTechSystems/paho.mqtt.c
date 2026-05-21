@@ -39,6 +39,7 @@ set(common_src
   MQTTProtocolOut.c
   MQTTPersistenceDefault.c
   SocketBuffer.c
+  RingBuffer.c
   LinkedList.c
   MQTTProperties.c
   MQTTReasonCodes.c

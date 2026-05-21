@@ -31,8 +31,32 @@ set_target_properties(
 )
 
 target_link_libraries(
-	thread 
+	thread
 	${LIBS_SYSTEM}
+)
+
+# SPSC ring buffer unit test (standalone — links RingBuffer.c directly,
+# no dependency on the full library or a broker).
+add_executable(
+	test_ringbuffer
+	test_ringbuffer.c ../src/RingBuffer.c
+)
+
+target_include_directories(test_ringbuffer PRIVATE ../src)
+
+target_link_libraries(
+	test_ringbuffer
+	${LIBS_SYSTEM}
+)
+
+add_test(
+	NAME ringbuffer-unit
+	COMMAND test_ringbuffer
+)
+
+set_tests_properties(
+	ringbuffer-unit
+	PROPERTIES TIMEOUT 60
 )
 
 if(PAHO_BUILD_STATIC)
