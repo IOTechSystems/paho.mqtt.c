@@ -77,6 +77,10 @@ typedef struct
 	int qos;
 } willMessages;
 
+/* Forward-declared so non-async / non-SSL builds don't need RingBuffer.h
+ * pulled into every header. The actual type is in src/RingBuffer.h. */
+struct RingBuffer;
+
 typedef struct
 {
 	SOCKET socket;
@@ -94,6 +98,19 @@ typedef struct
 	int websocket; /**< socket has been upgraded to use web sockets */
 	char *websocket_key;
 	const MQTTClient_nameValue* httpHeaders;
+	/* When non-NULL, the drainer thread is the producer for this socket
+	 * and the receive thread reads bytes from this ring instead of
+	 * calling recv() directly. Set after handshake-complete, cleared
+	 * before Socket_close(). Only used by MQTTAsync; MQTTClient (sync
+	 * API) leaves it NULL. */
+	struct RingBuffer* drain_ring;
+	/* Set to 1 by the drainer when it detects peer close or a fatal
+	 * recv()/SSL_read() error on this socket. The consumer (receive
+	 * thread) checks this in its ring scan; if set and the ring is
+	 * empty, it surfaces a SOCKET_ERROR to drive the existing
+	 * nextOrClose/reconnect path. Access via __atomic_load_n /
+	 * __atomic_store_n with acquire/release ordering. */
+	int drain_closed;
 } networkHandles;
 
 

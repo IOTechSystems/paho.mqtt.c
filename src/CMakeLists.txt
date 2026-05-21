@@ -40,6 +40,7 @@ set(common_src
   MQTTPersistenceDefault.c
   SocketBuffer.c
   RingBuffer.c
+  Drainer.c
   LinkedList.c
   MQTTProperties.c
   MQTTReasonCodes.c

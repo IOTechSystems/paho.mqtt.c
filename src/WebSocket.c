@@ -33,6 +33,7 @@
 #include "LinkedList.h"
 #include "MQTTProtocolOut.h"
 #include "SocketBuffer.h"
+#include "RingBuffer.h"
 #include "StackTrace.h"
 
 #if defined(__linux__)
@@ -634,6 +635,27 @@ int WebSocket_getch(networkHandles *net, char* c)
 			rc = TCPSOCKET_COMPLETE;
 		}
 	}
+	else if ( net->drain_ring )
+	{
+		/* Drainer feeds bytes into the ring; we read from there instead
+		 * of recv()/SSL_read(). SocketBuffer still tracks partial-packet
+		 * state across cycles (the fixed_header re-read buffer), so the
+		 * parser's interrupt/resume logic is unchanged. */
+		rc = SocketBuffer_getQueuedChar(net->socket, c);
+		if (rc != SOCKETBUFFER_INTERRUPTED)
+			goto exit;
+
+		if (RingBuffer_get_byte(net->drain_ring, c))
+		{
+			SocketBuffer_queueChar(net->socket, *c);
+			rc = TCPSOCKET_COMPLETE;
+		}
+		else
+		{
+			SocketBuffer_interrupted(net->socket, 0);
+			rc = TCPSOCKET_INTERRUPTED;
+		}
+	}
 #if defined(OPENSSL)
 	else if ( net->ssl )
 		rc = SSLSocket_getch(net->ssl, net->socket, c);
@@ -754,6 +776,32 @@ char *WebSocket_getdata(networkHandles *net, size_t bytes, size_t* actual_len)
 					free( last_frame );
 				last_frame = ListDetachHead(in_frames);
 			}
+		}
+	}
+	else if ( net->drain_ring )
+	{
+		/* Ring-backed getdata: SocketBuffer hands us the (possibly
+		 * partially-filled) payload buffer for this packet; we top it
+		 * up from the ring. Identical state machine to the recv() path. */
+		if ( bytes == 0u )
+		{
+			rv = SocketBuffer_complete(net->socket);
+		}
+		else
+		{
+			rv = SocketBuffer_getQueuedData(net->socket, bytes, actual_len);
+			if (rv == NULL)
+				goto exit;
+
+			size_t got = RingBuffer_get_bytes(net->drain_ring,
+			                                  rv + (*actual_len),
+			                                  bytes - (*actual_len));
+			*actual_len += got;
+
+			if (*actual_len == bytes)
+				SocketBuffer_complete(net->socket);
+			else
+				SocketBuffer_interrupted(net->socket, *actual_len);
 		}
 	}
 #if defined(OPENSSL)

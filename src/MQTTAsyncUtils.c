@@ -31,6 +31,8 @@
 #include "MQTTProtocolOut.h"
 #include "Thread.h"
 #include "SocketBuffer.h"
+#include "Drainer.h"
+#include "RingBuffer.h"
 #include "StackTrace.h"
 #include "Heap.h"
 #include "OsWrapper.h"
@@ -73,6 +75,7 @@ extern ClientStates* bstate; /* defined in MQTTAsync.c */
 
 extern enum MQTTAsync_threadStates sendThread_state;
 extern enum MQTTAsync_threadStates receiveThread_state;
+extern Drainer* g_drainer;
 extern thread_id_type sendThread_id,
                receiveThread_id;
 
@@ -2446,8 +2449,87 @@ static void MQTTAsync_stop(void)
 #endif
 			MQTTAsync_tostop = 0;
 		}
+		/* Last client has stopped — tear down the drainer too. All
+		 * sockets should already have been removed via closeOnly's
+		 * Drainer_removeSocket hook. */
+		if (g_drainer)
+		{
+			Drainer_destroy(g_drainer);
+			g_drainer = NULL;
+		}
 	}
 	FUNC_EXIT_RC(rc);
+}
+
+
+/* Default ring capacity if MQTTAsync_createOptions.drainerBufferSize == 0.
+ * 1 MB per client; trivial memory cost even at high client counts. */
+#define DRAINER_DEFAULT_RING_BYTES (1024u * 1024u)
+
+/* Attach a drained-ring to a freshly-connected client. Called when
+ * connect_state transitions to WAIT_FOR_CONNACK. Silent on failure —
+ * if the drainer or ring can't be set up, drain_ring stays NULL and
+ * WebSocket_getch/getdata falls through to the legacy recv() path.
+ *
+ * Ring size is taken from createOptions->drainerBufferSize when the
+ * struct is version >= 5; 0 means "use default". A bit pattern with
+ * the high bit set (i.e. interpreted as a negative int) disables the
+ * drainer entirely. */
+static void MQTTAsync_attachDrainer(MQTTAsyncs* m)
+{
+	Clients* c = m->c;
+	if (g_drainer == NULL)
+		return;
+	if (c->net.drain_ring != NULL)
+		return;
+
+	size_t ring_bytes = DRAINER_DEFAULT_RING_BYTES;
+	if (m->createOptions && m->createOptions->struct_version >= 5)
+	{
+		unsigned int cfg = m->createOptions->drainerBufferSize;
+		if ((int)cfg < 0)
+			return; /* user explicitly disabled the drainer */
+		if (cfg != 0)
+			ring_bytes = (size_t)cfg;
+	}
+
+	c->net.drain_ring = RingBuffer_create(ring_bytes);
+	if (c->net.drain_ring == NULL)
+	{
+		Log(LOG_ERROR, -1,
+			"RingBuffer_create(%zu) failed (must be power of two >= 2); "
+			"falling back to per-byte recv()", ring_bytes);
+		return;
+	}
+
+#if defined(OPENSSL)
+	void* ssl = c->net.ssl;
+#else
+	void* ssl = NULL;
+#endif
+
+	/* Reset closed flag before re-arming on a reconnect. */
+	__atomic_store_n(&c->net.drain_closed, 0, __ATOMIC_RELAXED);
+
+	if (Drainer_addSocket(g_drainer, c->net.socket, ssl,
+	                      c->net.drain_ring, &c->net.drain_closed) != 0)
+	{
+		Log(LOG_ERROR, -1, "Drainer_addSocket failed; falling back to per-byte recv()");
+		RingBuffer_destroy(c->net.drain_ring);
+		c->net.drain_ring = NULL;
+	}
+}
+
+/* Detach the drainer from a client about to have its socket closed.
+ * Synchronous — Drainer_removeSocket guarantees the drainer is no
+ * longer accessing the fd or ring once it returns. */
+static void MQTTAsync_detachDrainer(Clients* c)
+{
+	if (c->net.drain_ring == NULL || g_drainer == NULL)
+		return;
+	Drainer_removeSocket(g_drainer, c->net.socket);
+	RingBuffer_destroy(c->net.drain_ring);
+	c->net.drain_ring = NULL;
 }
 
 
@@ -2462,6 +2544,10 @@ static void MQTTAsync_closeOnly(Clients* client, enum MQTTReasonCodes reasonCode
 		MQTTProtocol_checkPendingWrites();
 		if (client->connected && MQTTAsync_Socket_noPendingWrites(client->net.socket))
 			MQTTPacket_send_disconnect(client, reasonCode, props);
+		/* Take the drainer off this socket BEFORE we tear down SSL or
+		 * close the fd. Synchronous: when this returns the drainer is
+		 * guaranteed to no longer touch fd or ring. */
+		MQTTAsync_detachDrainer(client);
 		MQTTAsync_lock_mutex(socket_mutex);
 		WebSocket_close(&client->net, WebSocket_CLOSE_NORMAL, NULL);
 #if defined(OPENSSL)
@@ -3013,6 +3099,7 @@ static int MQTTAsync_connecting(MQTTAsyncs* m)
 			else
 			{
 				m->c->connect_state = WAIT_FOR_CONNACK; /* TCP/SSL connect completed, in which case send the MQTT connect packet */
+				MQTTAsync_attachDrainer(m);
 				if ((rc = MQTTPacket_send_connect(m->c, m->connect.details.conn.MQTTVersion,
 						m->connectProps, m->willProps)) == SOCKET_ERROR)
 					goto exit;
@@ -3044,6 +3131,7 @@ static int MQTTAsync_connecting(MQTTAsyncs* m)
 		else
 		{
 			m->c->connect_state = WAIT_FOR_CONNACK; /* SSL connect completed, in which case send the MQTT connect packet */
+			MQTTAsync_attachDrainer(m);
 			if ((rc = MQTTPacket_send_connect(m->c, m->connect.details.conn.MQTTVersion,
 					m->connectProps, m->willProps)) == SOCKET_ERROR)
 				goto exit;
@@ -3071,12 +3159,60 @@ exit:
 }
 
 
+/* Scan registered MQTTAsync handles for the first drained client that
+ * needs the receive thread's attention — either bytes already buffered
+ * in its ring, or the drainer has flagged the socket closed. Caller
+ * must hold mqttasync_mutex.
+ *
+ * Returns the socket fd, or 0 if no client needs attention.
+ * If *closed_out is set to 1, the caller should treat the returned
+ * socket as a SOCKET_ERROR rather than a data-ready socket. */
+static SOCKET MQTTAsync_findClientWithRingData(int* closed_out)
+{
+	*closed_out = 0;
+	if (MQTTAsync_handles == NULL)
+		return 0;
+	ListElement* current = NULL;
+	while (ListNextElement(MQTTAsync_handles, &current))
+	{
+		MQTTAsyncs* mm = (MQTTAsyncs*)(current->content);
+		if (!mm->c || !mm->c->net.drain_ring)
+			continue;
+		if (RingBuffer_readable(mm->c->net.drain_ring) > 0)
+			return mm->c->net.socket;
+		/* Drain ring is empty — check for drainer-detected close. */
+		if (__atomic_load_n(&mm->c->net.drain_closed, __ATOMIC_ACQUIRE))
+		{
+			*closed_out = 1;
+			return mm->c->net.socket;
+		}
+	}
+	return 0;
+}
+
 static MQTTPacket* MQTTAsync_cycle(SOCKET* sock, unsigned long timeout, int* rc)
 {
 	MQTTPacket* pack = NULL;
 	int rc1 = 0;
 
 	FUNC_ENTRY;
+	/* Fast path: if any drained client has ring bytes (or has been
+	 * marked closed by the drainer), return it immediately — no need
+	 * to enter poll(). This is the common case once the drainer is up
+	 * and running; the kernel buffers will be empty (drainer drained
+	 * them) but the rings will have packets. */
+	*sock = 0;
+	int drain_closed = 0;
+	MQTTAsync_lock_mutex(mqttasync_mutex);
+	*sock = MQTTAsync_findClientWithRingData(&drain_closed);
+	MQTTAsync_unlock_mutex(mqttasync_mutex);
+	if (*sock > 0)
+	{
+		*rc = drain_closed ? SOCKET_ERROR : 0;
+		rc1 = *rc;
+		goto have_socket;
+	}
+
 #if defined(OPENSSL)
 	if ((*sock = SSLSocket_getPendingRead()) == -1)
 	{
@@ -3099,6 +3235,8 @@ static MQTTPacket* MQTTAsync_cycle(SOCKET* sock, unsigned long timeout, int* rc)
 #if defined(OPENSSL)
 	}
 #endif
+
+have_socket:
 	MQTTAsync_lock_mutex(mqttasync_mutex);
 	if (*sock > 0 && rc1 == 0)
 	{

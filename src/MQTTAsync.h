@@ -978,11 +978,12 @@ typedef struct
 {
 	/** The eyecatcher for this structure.  must be MQCO. */
 	char struct_id[4];
-	/** The version number of this structure.  Must be 0, 1, 2, 3 or 4
+	/** The version number of this structure.  Must be 0, 1, 2, 3, 4 or 5
 	 * 0 means no MQTTVersion
 	 * 1 means no allowDisconnectedSendAtAnyTime, deleteOldestMessages, restoreMessages
 	 * 2 means no persistQoS0
 	 * 3 means no tcpUserTimeoutMs
+	 * 4 means no drainerBufferSize
 	 */
 	int struct_version;
 	/** Whether to allow messages to be sent when the client library is not connected. */
@@ -1019,11 +1020,25 @@ typedef struct
 	 * Requires struct_version >= 4.
 	 */
 	unsigned int tcpUserTimeoutMs;
+	/**
+	 * Capacity in bytes of the per-client SPSC ring used by the internal
+	 * drainer thread (which reads from the socket in large chunks and
+	 * feeds the receive thread, dramatically reducing recv() syscall
+	 * count). Must be a power of two and >= 16384, or 0 to use the
+	 * library default (1 MiB).
+	 *
+	 * Set to a negative value (e.g. -1, by casting from int) to disable
+	 * the drainer entirely and fall back to the legacy per-byte recv()
+	 * path; this is intended only as an escape hatch.
+	 *
+	 * Requires struct_version >= 5.
+	 */
+	unsigned int drainerBufferSize;
 } MQTTAsync_createOptions;
 
-#define MQTTAsync_createOptions_initializer  { {'M', 'Q', 'C', 'O'}, 4, 0, 100, MQTTVERSION_DEFAULT, 0, 0, 1, 1, 0}
+#define MQTTAsync_createOptions_initializer  { {'M', 'Q', 'C', 'O'}, 5, 0, 100, MQTTVERSION_DEFAULT, 0, 0, 1, 1, 0, 0}
 
-#define MQTTAsync_createOptions_initializer5 { {'M', 'Q', 'C', 'O'}, 4, 0, 100, MQTTVERSION_5, 0, 0, 1, 1, 0}
+#define MQTTAsync_createOptions_initializer5 { {'M', 'Q', 'C', 'O'}, 5, 0, 100, MQTTVERSION_5, 0, 0, 1, 1, 0, 0}
 
 
 LIBMQTT_API int MQTTAsync_createWithOptions(MQTTAsync* handle, const char* serverURI, const char* clientId,

@@ -59,6 +59,8 @@
 #include "MQTTProtocolOut.h"
 #include "Thread.h"
 #include "SocketBuffer.h"
+#include "Socket.h"
+#include "Drainer.h"
 #include "StackTrace.h"
 #include "Heap.h"
 #include "OsWrapper.h"
@@ -89,6 +91,19 @@ enum MQTTAsync_threadStates sendThread_state = STOPPED;
 enum MQTTAsync_threadStates receiveThread_state = STOPPED;
 thread_id_type sendThread_id = 0,
                receiveThread_id = 0;
+
+/* Global drainer thread that drains all MQTTAsync-managed sockets into
+ * per-client SPSC rings. Lazily created on first MQTTAsync_connect,
+ * destroyed in MQTTAsync_stop when the last client disconnects. */
+Drainer* g_drainer = NULL;
+
+/* Void-returning wrapper for Socket_interrupt to match the
+ * DrainerWakeConsumer signature. We don't care about the return value
+ * (it's just a "byte enqueued" indicator from the interrupt fd). */
+static void MQTTAsync_drainerWake(void)
+{
+	(void)Socket_interrupt();
+}
 
 // global objects init declaration
 int MQTTAsync_init(void);
@@ -348,7 +363,7 @@ int MQTTAsync_createWithOptions(MQTTAsync* handle, const char* serverURI, const 
 	}
 
 	if (options && (strncmp(options->struct_id, "MQCO", 4) != 0 ||
-					options->struct_version < 0 || options->struct_version > 4))
+					options->struct_version < 0 || options->struct_version > 5))
 	{
 		rc = MQTTASYNC_BAD_STRUCTURE;
 		goto exit;
@@ -692,6 +707,15 @@ int MQTTAsync_connect(MQTTAsync handle, const MQTTAsync_connectOptions* options)
 	{
 		receiveThread_state = STARTING;
 		Paho_thread_start(MQTTAsync_receiveThread, handle);
+	}
+	/* Lazily create the global drainer. Socket_interrupt wakes the
+	 * receive thread (blocked in poll() inside Socket_getReadySocket)
+	 * whenever a ring transitions empty -> non-empty. */
+	if (g_drainer == NULL)
+	{
+		g_drainer = Drainer_create(MQTTAsync_drainerWake);
+		if (g_drainer == NULL)
+			Log(LOG_ERROR, -1, "Drainer_create failed; falling back to per-byte recv()");
 	}
 	if (locked)
 		MQTTAsync_unlock_mutex(mqttasync_mutex);

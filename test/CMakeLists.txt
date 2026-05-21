@@ -59,6 +59,30 @@ set_tests_properties(
 	PROPERTIES TIMEOUT 60
 )
 
+# Drainer unit test (standalone — links Drainer.c + RingBuffer.c directly,
+# uses socketpair() to simulate connected peers, no broker dependency).
+add_executable(
+	test_drainer
+	test_drainer.c ../src/Drainer.c ../src/RingBuffer.c
+)
+
+target_include_directories(test_drainer PRIVATE ../src)
+
+target_link_libraries(
+	test_drainer
+	${LIBS_SYSTEM}
+)
+
+add_test(
+	NAME drainer-unit
+	COMMAND test_drainer
+)
+
+set_tests_properties(
+	drainer-unit
+	PROPERTIES TIMEOUT 60
+)
+
 if(PAHO_BUILD_STATIC)
 	add_executable(test1-static test1.c)
 	target_link_libraries(test1-static paho-mqtt3c-static)
