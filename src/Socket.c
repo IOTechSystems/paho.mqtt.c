@@ -1478,6 +1478,8 @@ int Socket_new(const char* addr, size_t addr_len, int port, SOCKET* sock, unsign
 			{
 				if (setsockopt(*sock, IPPROTO_TCP, TCP_USER_TIMEOUT, &tcpUserTimeoutMs, sizeof(tcpUserTimeoutMs)) != 0)
 					Log(LOG_ERROR, -1, "Could not set TCP_USER_TIMEOUT for socket %d", *sock);
+				else
+					Log(LOG_PROTOCOL, -1, "Set TCP_USER_TIMEOUT to %u ms for socket %d", tcpUserTimeoutMs, *sock);
 			}
 #endif
 /*#define SMALL_TCP_BUFFER_TESTING

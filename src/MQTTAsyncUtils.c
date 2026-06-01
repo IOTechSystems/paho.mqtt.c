@@ -964,6 +964,8 @@ void MQTTAsync_startConnectRetry(MQTTAsyncs* m)
 			m->retrying = 1;
 		}
 		m->currentInterval = MQTTAsync_randomJitter(m->currentIntervalBase, m->minRetryInterval, m->maxRetryInterval);
+		Log(LOG_PROTOCOL, -1, "Client %s next connect retry: intervalBase %d s, interval %d s (retrying %d, startBackoffAfterFirstRetry %d)",
+				m->c->clientID, m->currentIntervalBase, m->currentInterval, m->retrying, m->startBackoffAfterFirstRetry);
 	}
 }
 
