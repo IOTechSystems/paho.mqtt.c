@@ -816,9 +816,7 @@ SOCKET Socket_getReadySocket(int more_work, int timeout, mutex_type mutex, int* 
 				Log(TRACE_MINIMUM, -1, "Socket %d is connecting, reducing timeout from %d, no of sockets %d\n",
 					mod_s.saved.cur_fd, timeout_ms, mod_s.saved.nfds);
 
-				/* Will this result in excessive CPU use if the TCP connect is taking a long time,
-				 * such as on a satellite link? We could use a backoff algorithm if it turns out to be true */
-				timeout_ms = 0;
+				timeout_ms = more_work ? 0 : 50;
 				break;
 			}
 			mod_s.saved.cur_fd = (mod_s.saved.cur_fd == mod_s.saved.nfds - 1) ? -1 : mod_s.saved.cur_fd + 1;
